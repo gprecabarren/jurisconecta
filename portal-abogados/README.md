@@ -2,7 +2,7 @@
 
 Portal chileno para conectar personas que necesitan orientación legal con abogados verificados. El sitio oficial es [jurisconecta.cl](https://jurisconecta.cl).
 
-## Estado actual (9 de septiembre de 2026)
+## Estado actual (1 de octubre de 2026)
 
 La aplicación es un frontend Next.js exportado como sitio estático y servido por el Worker `jurisconecta`. El mismo Worker atiende las rutas dinámicas que antes estaban preparadas como Cloudflare Pages Functions en `functions/`.
 
@@ -18,21 +18,36 @@ No se debe usar, modificar ni desplegar ningún recurso de `chile3x.cl` desde es
 
 El proyecto heredado de Cloudflare Pages `jurisconecta-mvp` fue eliminado el 9 de septiembre de 2026. Solo publicaba copias en `*.pages.dev` y no servía el dominio oficial. La producción y los futuros despliegues quedan centralizados en el Worker `jurisconecta`.
 
+### Diseño y rendimiento
+
+- Manrope se usa en todo el sitio mediante `next/font/google`: Next.js la descarga durante la compilación, la incluye en los archivos estáticos del mismo dominio y genera un preload. El navegador no depende de Google Fonts ni de archivos del computador del desarrollador en cada visita.
+- La identidad combina azul marino, dorado y blanco cálido inspirados en [Bosich Legal](https://bosichlegal.cl/); los tamaños de títulos toman como referencia Chile3X sin reutilizar sus botones ni modificar ese proyecto. Los botones de JurisConecta son redondeados, con estados de foco y movimiento reducido para quien lo solicite.
+- La portada ya no depende de una fotografía remota de Unsplash: usa un fondo CSS, con menos recursos externos al cargar.
+- [NexoAbogados](https://www.nexoabogados.cl/) es una **referencia de flujo de producto**, no una integración ni una promesa de funciones terminadas: solicitud guiada, propuestas de profesionales, comparación y elección del abogado. El flujo de propuestas todavía está pendiente aquí.
+
 ### Control de costos
 
 El Worker y D1 están configurados para el plan Free. La carga de documentos a R2 queda **desactivada por defecto** con `LAWYER_APPLICATION_UPLOADS_ENABLED=false`, porque R2 dispone de una franquicia gratuita pero puede generar cobros al superarla. No cambiar esta variable a `true` sin definir primero límites operativos, retención de archivos y alertas de consumo. No se activaron planes, integraciones ni complementos pagados durante esta configuración.
 
 Ningún repositorio puede garantizar por sí solo que una cuenta de Cloudflare no genere cobros por uso o por productos previamente activados. Antes de aceptar postulaciones reales, revisar el consumo y las condiciones oficiales de [Workers](https://developers.cloudflare.com/workers/platform/pricing/), [D1](https://developers.cloudflare.com/d1/platform/pricing/) y [R2](https://developers.cloudflare.com/r2/pricing/). Las pruebas automatizadas no deben subir archivos a R2.
 
-## Módulos existentes
+## Módulos existentes y alcance real
 
 - Registro e inicio de sesión por correo para personas y abogados.
 - Sesión segura mediante cookie HTTP-only firmada.
 - Área de cliente: datos personales, publicación, listado y cierre de casos.
-- Área profesional: perfil, postulación, carga de documentos, planes, saldo de créditos, casos preferentes, pool y desbloqueo de contacto.
+- Área profesional: perfil, formulario de postulación, planes visibles, saldo de créditos, casos preferentes, pool y desbloqueo de contacto. **La carga de documentos permanece desactivada** para evitar consumo de R2 y la postulación completa no puede aprobarse en autoservicio sin habilitar una vía documental segura.
 - Administración: OAuth con GitHub, revisión de postulaciones y documentos, aprobación de abogados, asignación de créditos, edición del costo de casos y contenido público.
 - Contenido público: portada, equipo, ayuda, catálogo legal y búsqueda informativa.
 - Protección en el Worker de las páginas privadas según rol.
+
+Limitaciones que no deben confundirse con funciones terminadas:
+
+- `/account` muestra formularios de perfil profesional, contraseña y preferencias, pero su botón de guardar solo confirma localmente; no persiste cambios. `/cliente/cuenta` **sí** guarda datos básicos por API.
+- `/evaluaciones` es una pantalla vacía informativa. El panel profesional tiene avisos de ejemplo, no notificaciones reales.
+- No hay API ni interfaz para enviar, comparar o aceptar propuestas; `case_proposals` es solo una tabla preparada. Actualmente un profesional aprobado puede gastar créditos de prueba para desbloquear el contacto de un caso, sin paso explícito de aceptación del cliente. Revisar y ajustar este punto antes de captar casos reales.
+- Los planes y créditos son de prueba/asignación administrativa. No hay pagos, cobros automáticos, renovación efectiva ni Webpay habilitado.
+- Faltan recuperación/cambio efectivo de contraseña, correos transaccionales, páginas legales completas y artículos de ayuda desarrollados.
 
 ## Rutas del Worker
 
@@ -110,7 +125,7 @@ Se administran con `wrangler secret put NOMBRE`. El callback autorizado de la ap
 
 ### Verificación realizada
 
-El 9 de septiembre de 2026 se completaron:
+El 9 de septiembre de 2026 se completaron estas pruebas funcionales (no equivalen a una auditoría de seguridad ni a una nueva prueba integral de octubre):
 
 - TypeScript, ESLint, exportación estática de 21 páginas, tipos generados por Wrangler y empaquetado de despliegue, sin errores.
 - Pruebas HTTP locales de respuestas `200`, `401`, `404`, `405` y redirecciones de páginas privadas.
@@ -120,21 +135,21 @@ El 9 de septiembre de 2026 se completaron:
 - Flujo real de administración: redirección a GitHub, callback en el dominio oficial, creación de sesión y carga del panel protegido `/admin/`.
 - No se subieron archivos a R2 ni se probaron pagos.
 
-## Trabajo pendiente y cronograma estimado
+El 1 de octubre de 2026 se verificaron TypeScript, ESLint, compilación de las 21 páginas estáticas, empaquetado de Wrangler, inclusión/preload de archivos `.woff2` de Manrope y prueba HTTP del dominio oficial (`/`, `/api/health`, `/api/content`, recurso de fuente y redirección de `www`). También se revisó la portada en Chrome de escritorio y móvil. Despliegue: Worker `jurisconecta`, versión `6f735d1b-811e-40f8-9032-f2476202d66f`. No se repitieron pruebas end-to-end de registro, casos ni administración con datos de prueba en esta fecha.
 
-Estimación para una sola persona desarrollando y revisando. Puede cambiar al definir textos legales, proveedor de correo y pagos.
+## Ruta cautelosa de tres semanas
 
-| Prioridad | Trabajo | Estimación |
+Objetivo al **21 de octubre de 2026**: piloto controlado, sin pagos ni servicios de pago. Es una estimación para una persona que desarrolla y revisa; no incluye demoras de decisiones legales, contenido aportado por terceros ni contratación de un servicio externo. Cada semana termina con una revisión y no se avanza a usuarios reales si sus criterios fallan.
+
+| Fechas | Implementación y revisión | Criterio de salida |
 | --- | --- | --- |
-| Alta | Pruebas end-to-end de registro, sesiones, roles, casos, aprobación y créditos; retirar o anonimizar cuentas/datos de demostración | 1-2 días |
-| Alta | Endurecimiento previo a usuarios reales: rate limiting/Turnstile, política de documentos, validaciones de archivos, auditoría de permisos y recuperación de contraseña | 2-4 días |
-| Media | Conectar realmente `/account`: edición profesional, cambio de contraseña y preferencias; hoy parte de esa pantalla solo guarda estado visual | 1-2 días |
-| Media | Implementar propuestas/aceptación, coincidencias y notificaciones; la tabla `case_proposals` existe, pero todavía no tiene flujo de interfaz/API | 3-5 días |
-| Media | Completar evaluaciones, soporte operativo, correos transaccionales y páginas legales (privacidad, términos y tratamiento de datos) | 3-5 días |
-| Baja / comercial | Integrar Webpay u otro pago, renovaciones y conciliación. No activar hasta que se autoricen costos y condiciones comerciales | 4-7 días |
-| Final | QA de accesibilidad, rendimiento, compatibilidad, respaldo/restore de D1 y checklist de lanzamiento | 2-3 días |
+| 1–7 oct · base confiable | Revisar cada flujo real con datos ficticios: registro de ambos roles, sesiones, permisos, crear/cerrar caso, consumo de créditos y administración. Corregir mensajes que hoy sugieren aceptación del cliente o cobros que todavía no existen. Conectar `/account`, incluyendo perfil y contraseña, y decidir un proceso manual para verificar abogados sin habilitar R2. | Pruebas reproducibles, datos de prueba retirados, ningún formulario que diga «guardado» sin persistir, política clara de contacto y documentos. |
+| 8–14 oct · flujo principal | Construir envío de propuestas, límite de profesionales por caso, vista comparativa y aceptación/rechazo por el cliente. Revisar coincidencia por especialidad y región. Añadir notificaciones dentro del sitio; correo solo si existe una opción gratuita y aprobada. | Una persona puede publicar y comparar propuestas; un abogado ve únicamente casos/contactos autorizados; pruebas de roles y límites pasan. |
+| 15–21 oct · cierre y piloto | Evaluaciones tras casos cerrados; textos de privacidad, términos, ayuda y consentimiento revisados; rate limiting/antibots dentro de Free; pruebas de accesibilidad, móvil, rendimiento, seguridad, backup/restore de D1 y monitorización de uso. Piloto cerrado con usuarios de prueba. | Sin bloqueos críticos ni datos sensibles expuestos, costos observados dentro de Free, checklist de piloto firmado antes de invitar usuarios. |
 
-Con el alcance actual sin pagos —registro, casos, postulación y aprobación manual— faltan aproximadamente **3 a 5 días hábiles** para un piloto controlado. Para una versión comercial con propuestas, correos, evaluaciones, seguridad reforzada y pagos, la referencia es **3 a 5 semanas**.
+Orden de testeo recomendado: `/api/health` → portada/equipo/soporte en móvil y escritorio → `/registro` e `/ingresar` para ambos roles → `/publicar-caso` y `/cliente` → `/postulacion-abogado` (sin subir archivos) → `/admin` → `/casos/pool`, `/casos/preferentes`, `/casos/accedidos` y `/planes` → cierre de sesión y verificación de acceso denegado entre roles. Repetir después de cada cambio de API o permisos.
+
+La referencia de **tres semanas es para un piloto sin pagos**. Una versión comercial con Webpay, renovaciones y conciliación requiere otras **1–2 semanas de implementación y pruebas**, además de decisión sobre costos y condiciones; no se activará mientras la instrucción sea no generar cobros.
 
 ## Migraciones
 

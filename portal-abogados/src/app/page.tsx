@@ -26,9 +26,9 @@ const areas = [
 ];
 
 const steps = [
-  { icon: FileText, title: "Cuéntanos tu caso", copy: "Selecciona una materia y responde algunas preguntas simples. Es confidencial y no tiene costo." },
-  { icon: MessageSquareText, title: "Recibe propuestas", copy: "Abogados que trabajan en tu tema revisan el caso y pueden enviarte una propuesta." },
-  { icon: BadgeCheck, title: "Elige con calma", copy: "Compara experiencia, modalidad de atención y propuesta. Tú decides con quién avanzar." },
+  { icon: FileText, title: "Cuéntanos tu caso", copy: "Selecciona una materia y responde algunas preguntas simples. Publicar es gratis; evita incluir datos sensibles en la descripción." },
+  { icon: MessageSquareText, title: "Profesionales revisan tu solicitud", copy: "Los abogados registrados pueden ver la descripción. Sólo los aprobados pueden desbloquear tu contacto usando créditos de prueba." },
+  { icon: BadgeCheck, title: "Conversen directamente", copy: "Un profesional que desbloquee tu contacto podrá comunicarse contigo. Todavía no hay propuestas ni comparación dentro del sitio." },
 ];
 
 export default function Home() {
@@ -56,7 +56,7 @@ export default function Home() {
           <h1>Encuentra la ayuda legal que necesitas.</h1>
           <p className="hero-description">Describe tu situación y conecta con profesionales que trabajan en la materia y zona que necesitas.</p>
           <ul className="hero-points">
-            <li><Check size={17} /> Solicitud gratuita y confidencial</li>
+            <li><Check size={17} /> Publicación gratuita; contacto protegido</li>
             <li><Check size={17} /> Atención presencial u online</li>
             <li><Check size={17} /> Profesionales con perfiles revisados</li>
           </ul>
@@ -70,7 +70,7 @@ export default function Home() {
             <p>Te ayudamos a partir con la especialidad correcta, sin comprometerte.</p>
           </div>
           <div className="panel-stats">
-            <span><strong>2 min</strong> para publicar</span>
+            <span><strong>3 pasos</strong> para publicar</span>
             <span><strong>Chile</strong> atención nacional</span>
           </div>
         </div>
@@ -146,9 +146,9 @@ export default function Home() {
           <Link href="/registro" className="text-link">Crear una cuenta <ArrowRight size={16} /></Link>
         </div>
         <div className="trust-cards">
-          <article><ShieldCheck size={24} /><h3>Datos protegidos</h3><p>Tu caso queda visible sólo para profesionales habilitados.</p></article>
-          <article><MapPin size={24} /><h3>Cobertura nacional</h3><p>Filtra por región, comuna y modalidad de atención.</p></article>
-          <article><BriefcaseBusiness size={24} /><h3>Perfiles completos</h3><p>Revisa especialidad, experiencia y datos de contacto antes de elegir.</p></article>
+          <article><ShieldCheck size={24} /><h3>Contacto protegido</h3><p>El contacto se entrega sólo a abogados aprobados que desbloquean el caso con créditos.</p></article>
+          <article><MapPin size={24} /><h3>Cobertura nacional</h3><p>Indica región, comuna y modalidad de atención al publicar tu solicitud.</p></article>
+          <article><BriefcaseBusiness size={24} /><h3>Revisión profesional</h3><p>Los abogados deben pasar una aprobación antes de acceder al contacto de las personas.</p></article>
         </div>
       </section>
 
@@ -163,7 +163,7 @@ export default function Home() {
         <div className="footer-brand"><Link className="brand" href="/"><span className="brand-mark"><Scale size={20} /></span><span>Juris<span>Conecta</span></span></Link><p>Conexiones legales claras para Chile.</p></div>
         <div><h3>Personas</h3><Link href="/registro">Publicar un caso</Link><Link href="/registro">Crear cuenta</Link></div>
         <div><h3>Profesionales</h3><Link href="/registro?tipo=abogado">Crear perfil</Link><Link href="/ingresar">Ingresar</Link></div>
-        <div><h3>Soporte</h3><a href="mailto:hola@jurisconecta.cl">Contacto</a><a href="#">Privacidad</a></div>
+        <div><h3>Soporte</h3><a href="mailto:hola@jurisconecta.cl">Contacto</a><a href="mailto:hola@jurisconecta.cl?subject=Consulta%20sobre%20privacidad">Consulta de privacidad</a></div>
       </footer>
     </main>
   );
