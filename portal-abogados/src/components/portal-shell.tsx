@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- Images are small validated data URLs; no image CDN is used. */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,12 +12,14 @@ const lawyerItems = [
   { href: "/casos/preferentes", label: "Casos preferentes", icon: Star },
   { href: "/casos/pool", label: "Casos del pool", icon: UsersRound },
   { href: "/casos/accedidos", label: "Casos accedidos", icon: FileCheck2 },
+  { href: "/casos/propuestas", label: "Mis propuestas", icon: ContactRound },
   { href: "/evaluaciones", label: "Evaluaciones", icon: BarChart3 },
   { href: "/account", label: "Mi cuenta", icon: Settings2 },
+  { href: "/soporte", label: "Soporte y tickets", icon: CircleHelp },
   { href: "/planes", label: "Plan y créditos", icon: WalletCards },
 ];
 
-type LawyerHeader = { full_name: string; plan_code: string; credit_balance: number; renewal_date: string | null };
+type LawyerHeader = { full_name: string; plan_code: string; credit_balance: number; renewal_date: string | null; avatar_data_url: string | null };
 
 export function PortalShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
   const pathname = usePathname();
@@ -29,10 +32,15 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     ? [
         { href: "/admin", label: "Resumen", icon: LayoutDashboard },
         { href: "/admin#perfiles", label: "Perfiles", icon: ContactRound },
+        { href: "/admin#usuarios", label: "Todas las cuentas", icon: UsersRound },
         { href: "/admin#postulaciones", label: "Postulaciones", icon: FileCheck2 },
         { href: "/admin#casos", label: "Casos y créditos", icon: WalletCards },
         { href: "/admin#equipo", label: "Equipo", icon: UsersRound },
         { href: "/admin#soporte", label: "Centro de ayuda", icon: CircleHelp },
+        { href: "/admin#tickets", label: "Tickets", icon: CircleHelp },
+        { href: "/admin#recuperacion", label: "Recuperación", icon: Settings2 },
+        { href: "/admin#bitacora", label: "Bitácora", icon: FileCheck2 },
+        { href: "/admin#sesiones", label: "Mis dispositivos", icon: Settings2 },
       ]
     : lawyerItems;
   const initials = (lawyer?.full_name || "PC").split(" ").map((item) => item[0]).join("").slice(0, 2);
@@ -57,7 +65,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     <section className="portal-workspace">
       <header className="portal-topbar">
         {!admin ? <div className="plan-summary"><span><b>{lawyer?.credit_balance ?? "-"}</b> créditos disponibles</span><span>Renovación: <b>{renewal}</b></span></div> : <div className="plan-summary"><span><b>JurisConecta</b> gestión interna</span><span>Modo demostración</span></div>}
-        <div className="portal-user"><span className="topbar-notice">{admin ? "Administrador" : lawyer ? `Plan ${lawyer.plan_code}` : "Cuenta profesional"}</span><span className="avatar">{admin ? "AD" : initials}</span></div>
+        <div className="portal-user"><span className="topbar-notice">{admin ? "Administrador" : lawyer ? `Plan ${lawyer.plan_code}` : "Cuenta profesional"}</span>{!admin && lawyer?.avatar_data_url ? <img className="avatar" src={lawyer.avatar_data_url} alt="Foto de perfil" /> : <span className="avatar">{admin ? "AD" : initials}</span>}</div>
       </header>
       <main className="portal-main">{children}</main>
     </section>

@@ -1,3 +1,4 @@
+import { sessionMetadata } from "./session-meta";
 export type UserRole = "person" | "lawyer" | "admin";
 
 export interface D1Statement {
@@ -34,6 +35,8 @@ export type UserSession = {
   email: string;
   fullName: string;
   role: UserRole;
+  sessionVersion?: number;
+  sessionId?: string;
   expiresAt: number;
 };
 
@@ -102,16 +105,24 @@ async function readSession(request: Request, env: UserAuthEnv): Promise<UserSess
   if (!payload || !signature || !equal(signature, await sign(payload, env.USER_AUTH_SECRET))) return null;
   try {
     const session = JSON.parse(fromBase64Url(payload)) as UserSession;
-    if (!session.id || !session.email || !session.role || !session.expiresAt || session.expiresAt < Date.now()) return null;
+    if (!session.id || !session.email || !session.role || !session.sessionId || !session.expiresAt || session.expiresAt < Date.now() || !env.DB) return null;
+    const current = await env.DB.prepare("SELECT session_version, role, status FROM users WHERE id = ? LIMIT 1").bind(session.id).first<{ session_version: number; role: UserRole; status: string }>();
+    if (!current || current.status === "suspended" || current.role !== session.role || current.session_version !== (session.sessionVersion ?? 0)) return null;
+    const active = await env.DB.prepare("SELECT id, last_seen_at FROM user_sessions WHERE id = ? AND user_id = ? AND revoked_at IS NULL LIMIT 1").bind(session.sessionId, session.id).first<{ id: string; last_seen_at: string }>();
+    if (!active) return null;
+    if (Date.now() - Date.parse(active.last_seen_at + "Z") > 30 * 60 * 1000) await env.DB.prepare("UPDATE user_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ? AND revoked_at IS NULL").bind(session.sessionId).run();
     return session;
   } catch {
     return null;
   }
 }
 
-export async function createUserSession(user: Omit<UserSession, "expiresAt">, env: UserAuthEnv) {
-  if (!env.USER_AUTH_SECRET) throw new Error("La autenticación de usuarios todavía no está configurada.");
-  const payload = base64UrlText(JSON.stringify({ ...user, expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 14 } satisfies UserSession));
+export async function createUserSession(user: Omit<UserSession, "expiresAt" | "sessionId">, env: UserAuthEnv, request: Request) {
+  if (!env.USER_AUTH_SECRET || !env.DB) throw new Error("La autenticación de usuarios todavía no está configurada.");
+  const sessionId = crypto.randomUUID();
+  const { device, location, ipHint } = sessionMetadata(request);
+  await env.DB.prepare("INSERT INTO user_sessions (id, user_id, device, location, ip_hint) VALUES (?, ?, ?, ?, ?)").bind(sessionId, user.id, device, location, ipHint).run();
+  const payload = base64UrlText(JSON.stringify({ ...user, sessionId, expiresAt: Date.now() + 1000 * 60 * 60 * 24 * 14 } satisfies UserSession));
   return `${payload}.${await sign(payload, env.USER_AUTH_SECRET)}`;
 }
 

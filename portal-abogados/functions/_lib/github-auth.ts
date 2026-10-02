@@ -1,4 +1,7 @@
+import { sessionMetadata } from "./session-meta";
+import type { D1Database } from "./user-auth";
 export interface AuthEnv {
+  DB?: D1Database;
   ADMIN_AUTH_CONFIG?: string;
   ADMIN_GITHUB_LOGIN?: string;
   AUTH_SESSION_SECRET?: string;
@@ -6,7 +9,7 @@ export interface AuthEnv {
   GITHUB_CLIENT_SECRET?: string;
 }
 
-type Session = { login: string; expiresAt: number };
+type Session = { login: string; sessionId: string; expiresAt: number };
 type StoredConfig = { clientSecret?: string; sessionSecret?: string };
 
 export const githubClientId = "Ov23liir1fiOAg9FC4YK";
@@ -75,10 +78,13 @@ export function randomToken() {
   return base64Url(bytes);
 }
 
-export async function createSession(login: string, env: AuthEnv) {
+export async function createSession(login: string, env: AuthEnv, request: Request) {
   const { sessionSecret } = authSettings(env);
-  if (!sessionSecret) throw new Error("La autenticación todavía no está configurada.");
-  const payload = base64UrlText(JSON.stringify({ login, expiresAt: Date.now() + 1000 * 60 * 60 * 8 } satisfies Session));
+  if (!sessionSecret || !env.DB) throw new Error("La autenticación todavía no está configurada.");
+  const sessionId = crypto.randomUUID();
+  const { device, location, ipHint } = sessionMetadata(request);
+  await env.DB.prepare("INSERT INTO admin_sessions (id, github_login, device, location, ip_hint) VALUES (?, ?, ?, ?, ?)").bind(sessionId, login, device, location, ipHint).run();
+  const payload = base64UrlText(JSON.stringify({ login, sessionId, expiresAt: Date.now() + 1000 * 60 * 60 * 8 } satisfies Session));
   return `${payload}.${await sign(payload, sessionSecret)}`;
 }
 
@@ -90,7 +96,10 @@ export async function readSession(request: Request, env: AuthEnv): Promise<Sessi
   if (!payload || !signature || !equals(signature, await sign(payload, sessionSecret))) return null;
   try {
     const session = JSON.parse(fromBase64Url(payload)) as Session;
-    if (!session.login || !session.expiresAt || session.expiresAt < Date.now()) return null;
+    if (!session.login || !session.sessionId || !session.expiresAt || session.expiresAt < Date.now() || !env.DB) return null;
+    const active = await env.DB.prepare("SELECT id, last_seen_at FROM admin_sessions WHERE id = ? AND github_login = ? AND revoked_at IS NULL LIMIT 1").bind(session.sessionId, session.login).first<{ id: string; last_seen_at: string }>();
+    if (!active) return null;
+    if (Date.now() - Date.parse(active.last_seen_at + "Z") > 30 * 60 * 1000) await env.DB.prepare("UPDATE admin_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ? AND revoked_at IS NULL").bind(session.sessionId).run();
     return session;
   } catch { return null; }
 }

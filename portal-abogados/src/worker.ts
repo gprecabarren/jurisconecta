@@ -12,17 +12,32 @@ import { onRequestGet as getAdminApplications, onRequestPatch as reviewAdminAppl
 import { onRequestGet as getAdminCases, onRequestPatch as updateAdminCase } from "../functions/api/admin/cases";
 import { onRequestGet as getAdminContent, onRequestPut as updateAdminContent } from "../functions/api/admin/content";
 import { onRequestGet as getAdminProfiles } from "../functions/api/admin/profiles";
+import { onRequestGet as getAdminTickets, onRequestPatch as updateAdminTicket } from "../functions/api/admin/tickets";
+import { onRequestGet as getAdminRecovery, onRequestPatch as updateAdminRecovery } from "../functions/api/admin/recovery";
+import { onRequestGet as getAdminAudit } from "../functions/api/admin/audit";
+import { onRequestGet as getAdminUsers, onRequestPatch as updateAdminUser, onRequestDelete as deleteAdminUser } from "../functions/api/admin/users";
+import { onRequestGet as getAdminSessions, onRequestDelete as deleteAdminSession } from "../functions/api/admin/sessions";
 import { onRequestPost as login } from "../functions/api/auth/login";
 import { onRequestPost as logout } from "../functions/api/auth/logout";
 import { onRequestGet as getCurrentUser } from "../functions/api/auth/me";
 import { onRequestPatch as updateCurrentUser } from "../functions/api/auth/profile";
 import { onRequestPost as register } from "../functions/api/auth/register";
+import { onRequestPatch as changePassword } from "../functions/api/auth/password";
+import { onRequestPost as requestRecovery, onRequestPatch as resetPassword } from "../functions/api/auth/recovery";
+import { onRequestPatch as disableOwnAccount, onRequestDelete as deleteOwnAccount } from "../functions/api/auth/account";
+import { onRequestGet as getUserSessions, onRequestDelete as deleteUserSession } from "../functions/api/auth/sessions";
 import { onRequestGet as getClientCases, onRequestPatch as updateClientCase, onRequestPost as createClientCase } from "../functions/api/cases";
 import { onRequestGet as getPublicContent } from "../functions/api/content";
 import { onRequestPost as submitLawyerApplication } from "../functions/api/lawyer/application";
 import { onRequestGet as getLawyerCases, onRequestPost as accessLawyerCase } from "../functions/api/lawyer/cases";
 import { onRequestGet as getLawyerPlans } from "../functions/api/lawyer/plans";
 import { onRequestGet as getLawyerProfile, onRequestPatch as updateLawyerProfile } from "../functions/api/lawyer/profile";
+import { onRequestGet as getLawyerProposals, onRequestPost as createLawyerProposal } from "../functions/api/lawyer/proposals";
+import { onRequestGet as getClientProposals, onRequestPatch as decideClientProposal } from "../functions/api/client/proposals";
+import { onRequestGet as getTickets, onRequestPost as createTicket, onRequestPatch as replyTicket } from "../functions/api/tickets";
+import { onRequestGet as getNotifications, onRequestPatch as markNotification } from "../functions/api/notifications";
+import { onRequestGet as getNotificationPreferences, onRequestPatch as updateNotificationPreferences } from "../functions/api/notifications/preferences";
+import { onRequestGet as getReviews, onRequestPost as createReview } from "../functions/api/reviews";
 import { onRequestGet as githubCallback } from "../functions/auth/github/callback";
 import { onRequestGet as githubLogin } from "../functions/auth/github/login";
 import type { AuthEnv } from "../functions/_lib/github-auth";
@@ -62,10 +77,52 @@ async function dispatchApi(request: Request, env: AppEnv, pathname: string): Pro
   }
 
   if (pathname === "/api/auth/login") return method === "POST" ? login({ request, env }) : methodNotAllowed(["POST"]);
-  if (pathname === "/api/auth/logout") return method === "POST" ? logout() : methodNotAllowed(["POST"]);
+  if (pathname === "/api/auth/logout") return method === "POST" ? logout({ request, env }) : methodNotAllowed(["POST"]);
   if (pathname === "/api/auth/me") return method === "GET" ? getCurrentUser({ request, env }) : methodNotAllowed(["GET"]);
   if (pathname === "/api/auth/profile") return method === "PATCH" ? updateCurrentUser({ request, env }) : methodNotAllowed(["PATCH"]);
   if (pathname === "/api/auth/register") return method === "POST" ? register({ request, env }) : methodNotAllowed(["POST"]);
+  if (pathname === "/api/auth/password") return method === "PATCH" ? changePassword({ request, env }) : methodNotAllowed(["PATCH"]);
+  if (pathname === "/api/auth/recovery") {
+    if (method === "POST") return requestRecovery({ request, env });
+    if (method === "PATCH") return resetPassword({ request, env });
+    return methodNotAllowed(["POST", "PATCH"]);
+  }
+  if (pathname === "/api/auth/account") {
+    if (method === "PATCH") return disableOwnAccount({ request, env });
+    if (method === "DELETE") return deleteOwnAccount({ request, env });
+    return methodNotAllowed(["PATCH", "DELETE"]);
+  }
+  if (pathname === "/api/auth/sessions") {
+    if (method === "GET") return getUserSessions({ request, env });
+    if (method === "DELETE") return deleteUserSession({ request, env });
+    return methodNotAllowed(["GET", "DELETE"]);
+  }
+  if (pathname === "/api/tickets") {
+    if (method === "GET") return getTickets({ request, env });
+    if (method === "POST") return createTicket({ request, env });
+    if (method === "PATCH") return replyTicket({ request, env });
+    return methodNotAllowed(["GET", "POST", "PATCH"]);
+  }
+  if (pathname === "/api/notifications") {
+    if (method === "GET") return getNotifications({ request, env });
+    if (method === "PATCH") return markNotification({ request, env });
+    return methodNotAllowed(["GET", "PATCH"]);
+  }
+  if (pathname === "/api/notifications/preferences") {
+    if (method === "GET") return getNotificationPreferences({ request, env });
+    if (method === "PATCH") return updateNotificationPreferences({ request, env });
+    return methodNotAllowed(["GET", "PATCH"]);
+  }
+  if (pathname === "/api/reviews") {
+    if (method === "GET") return getReviews({ request, env });
+    if (method === "POST") return createReview({ request, env });
+    return methodNotAllowed(["GET", "POST"]);
+  }
+  if (pathname === "/api/client/proposals") {
+    if (method === "GET") return getClientProposals({ request, env });
+    if (method === "PATCH") return decideClientProposal({ request, env });
+    return methodNotAllowed(["GET", "PATCH"]);
+  }
 
   if (pathname === "/api/lawyer/application") return method === "POST" ? submitLawyerApplication({ request, env }) : methodNotAllowed(["POST"]);
   if (pathname === "/api/lawyer/cases") {
@@ -78,6 +135,11 @@ async function dispatchApi(request: Request, env: AppEnv, pathname: string): Pro
     if (method === "GET") return getLawyerProfile({ request, env });
     if (method === "PATCH") return updateLawyerProfile({ request, env });
     return methodNotAllowed(["GET", "PATCH"]);
+  }
+  if (pathname === "/api/lawyer/proposals") {
+    if (method === "GET") return getLawyerProposals({ request, env });
+    if (method === "POST") return createLawyerProposal({ request, env });
+    return methodNotAllowed(["GET", "POST"]);
   }
 
   if (pathname === "/api/admin/applications") {
@@ -96,6 +158,28 @@ async function dispatchApi(request: Request, env: AppEnv, pathname: string): Pro
     return methodNotAllowed(["GET", "PUT"]);
   }
   if (pathname === "/api/admin/profiles") return method === "GET" ? getAdminProfiles({ request, env }) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/admin/tickets") {
+    if (method === "GET") return getAdminTickets({ request, env });
+    if (method === "PATCH") return updateAdminTicket({ request, env });
+    return methodNotAllowed(["GET", "PATCH"]);
+  }
+  if (pathname === "/api/admin/recovery") {
+    if (method === "GET") return getAdminRecovery({ request, env });
+    if (method === "PATCH") return updateAdminRecovery({ request, env });
+    return methodNotAllowed(["GET", "PATCH"]);
+  }
+  if (pathname === "/api/admin/audit") return method === "GET" ? getAdminAudit({ request, env }) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/admin/users") {
+    if (method === "GET") return getAdminUsers({ request, env });
+    if (method === "PATCH") return updateAdminUser({ request, env });
+    if (method === "DELETE") return deleteAdminUser({ request, env });
+    return methodNotAllowed(["GET", "PATCH", "DELETE"]);
+  }
+  if (pathname === "/api/admin/sessions") {
+    if (method === "GET") return getAdminSessions({ request, env });
+    if (method === "DELETE") return deleteAdminSession({ request, env });
+    return methodNotAllowed(["GET", "DELETE"]);
+  }
 
   const documentMatch = pathname.match(/^\/api\/admin\/application-document\/([^/]+)$/);
   if (documentMatch) {

@@ -27,8 +27,8 @@ const areas = [
 
 const steps = [
   { icon: FileText, title: "Cuéntanos tu caso", copy: "Selecciona una materia y responde algunas preguntas simples. Publicar es gratis; evita incluir datos sensibles en la descripción." },
-  { icon: MessageSquareText, title: "Profesionales revisan tu solicitud", copy: "Los abogados registrados pueden ver la descripción. Sólo los aprobados pueden desbloquear tu contacto usando créditos de prueba." },
-  { icon: BadgeCheck, title: "Conversen directamente", copy: "Un profesional que desbloquee tu contacto podrá comunicarse contigo. Todavía no hay propuestas ni comparación dentro del sitio." },
+  { icon: MessageSquareText, title: "Compara propuestas", copy: "Hasta tres profesionales aprobados pueden proponerte una solución. Entra a tu panel para conocer su experiencia y comparar." },
+  { icon: BadgeCheck, title: "Acepta y sigue tu caso", copy: "Solo el abogado que eliges puede desbloquear tu contacto. Sigue el avance y evalúa tu experiencia desde tu cuenta." },
 ];
 
 export default function Home() {
@@ -46,8 +46,9 @@ export default function Home() {
           <a href="#como-funciona">Cómo funciona</a>
           <a href="#casos">Casos</a>
           <a href="#confianza">Por qué elegirnos</a>
+          <Link href="/soporte">Soporte</Link>
         </nav>
-        <Link className="lawyer-link" href="/registro?tipo=abogado">¿Eres abogado?<ArrowRight size={15} /></Link>
+        <div className="header-actions"><Link className="client-login-link" href="/ingresar">Iniciar sesión clientes</Link><Link className="lawyer-link" href="/registro?tipo=abogado">¿Eres abogado?<ArrowRight size={15} /></Link></div>
       </header>
 
       <section className="hero">
@@ -146,7 +147,7 @@ export default function Home() {
           <Link href="/registro" className="text-link">Crear una cuenta <ArrowRight size={16} /></Link>
         </div>
         <div className="trust-cards">
-          <article><ShieldCheck size={24} /><h3>Contacto protegido</h3><p>El contacto se entrega sólo a abogados aprobados que desbloquean el caso con créditos.</p></article>
+          <article><ShieldCheck size={24} /><h3>Contacto protegido</h3><p>Solo el profesional que aceptas puede desbloquear tu contacto con créditos de prueba.</p></article>
           <article><MapPin size={24} /><h3>Cobertura nacional</h3><p>Indica región, comuna y modalidad de atención al publicar tu solicitud.</p></article>
           <article><BriefcaseBusiness size={24} /><h3>Revisión profesional</h3><p>Los abogados deben pasar una aprobación antes de acceder al contacto de las personas.</p></article>
         </div>
@@ -161,9 +162,9 @@ export default function Home() {
 
       <footer className="site-footer section-shell">
         <div className="footer-brand"><Link className="brand" href="/"><span className="brand-mark"><Scale size={20} /></span><span>Juris<span>Conecta</span></span></Link><p>Conexiones legales claras para Chile.</p></div>
-        <div><h3>Personas</h3><Link href="/registro">Publicar un caso</Link><Link href="/registro">Crear cuenta</Link></div>
+        <div><h3>Personas</h3><Link href="/registro">Publicar un caso</Link><Link href="/ingresar">Iniciar sesión</Link><Link href="/cliente">Seguir mis casos</Link></div>
         <div><h3>Profesionales</h3><Link href="/registro?tipo=abogado">Crear perfil</Link><Link href="/ingresar">Ingresar</Link></div>
-        <div><h3>Soporte</h3><a href="mailto:hola@jurisconecta.cl">Contacto</a><a href="mailto:hola@jurisconecta.cl?subject=Consulta%20sobre%20privacidad">Consulta de privacidad</a></div>
+        <div><h3>Soporte</h3><Link href="/soporte">Ayuda y tickets</Link><Link href="/privacidad">Privacidad</Link><Link href="/terminos">Términos</Link></div>
       </footer>
     </main>
   );

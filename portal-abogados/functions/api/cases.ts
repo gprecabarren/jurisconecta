@@ -4,13 +4,13 @@ import { isChileRegion } from "../../shared/chile";
 
 interface Context { request: Request; env: UserAuthEnv & { DB?: D1Database }; }
 type CaseInput = { category?: unknown; topic?: unknown; situation?: unknown; desiredOutcome?: unknown; attentionMode?: unknown; region?: unknown; commune?: unknown; };
-type CaseRow = { id: string; category: string; title: string; description: string; region: string | null; status: string; created_at: string; attention_mode: string | null; commune: string | null; view_count: number; };
+type CaseRow = { id: string; category: string; title: string; description: string; region: string | null; status: string; created_at: string; attention_mode: string | null; commune: string | null; view_count: number; proposal_count: number; accepted_count: number; };
 
 export const onRequestGet = async ({ request, env }: Context) => {
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
   const session = await requireUser(request, env, "person");
   if (!session) return Response.json({ error: "No autorizado" }, { status: 401 });
-  const cases = await env.DB.prepare("SELECT c.id, c.category, c.title, c.description, c.region, c.status, c.created_at, d.attention_mode, d.commune, COALESCE((SELECT COUNT(*) FROM case_views cv WHERE cv.case_id = c.id), 0) AS view_count FROM legal_cases c LEFT JOIN case_details d ON d.case_id = c.id WHERE c.person_id = ? ORDER BY c.created_at DESC").bind(session.id).all<CaseRow>();
+  const cases = await env.DB.prepare("SELECT c.id, c.category, c.title, c.description, c.region, c.status, c.created_at, d.attention_mode, d.commune, COALESCE((SELECT COUNT(*) FROM case_views cv WHERE cv.case_id = c.id), 0) AS view_count, (SELECT COUNT(*) FROM case_proposals p WHERE p.case_id = c.id) AS proposal_count, (SELECT COUNT(*) FROM case_proposals p WHERE p.case_id = c.id AND p.status = 'accepted') AS accepted_count FROM legal_cases c LEFT JOIN case_details d ON d.case_id = c.id WHERE c.person_id = ? ORDER BY c.created_at DESC").bind(session.id).all<CaseRow>();
   return Response.json({ cases: cases.results });
 };
 

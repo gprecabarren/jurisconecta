@@ -24,7 +24,8 @@ export const onRequestGet = async ({ request, env }: Context) => {
   const profile = await profileResponse.json() as GitHubUser;
   if (!profile.login || profile.login.toLowerCase() !== allowedLogin.toLowerCase()) return new Response("Esta cuenta de GitHub no está autorizada para administrar JurisConecta.", { status: 403, headers: { "Set-Cookie": clearCookie("juris_oauth_state") } });
 
-  const session = await createSession(profile.login, env);
+  const session = await createSession(profile.login, env, request);
+  if (env.DB) await env.DB.prepare("INSERT INTO admin_audit_log (id, github_login, action, target_type, target_id, details_json) VALUES (?, ?, 'admin.login', 'admin_session', NULL, '{}')").bind(crypto.randomUUID(), profile.login).run();
   const headers = new Headers({ Location: "/admin/" });
   headers.append("Set-Cookie", clearCookie("juris_oauth_state"));
   headers.append("Set-Cookie", cookie("juris_admin", session, 28800));

@@ -1,8 +1,8 @@
 import { adminGitHubLogin, authSettings, readSession, type AuthEnv } from "../../_lib/github-auth";
 import type { HelpArticle, TeamMember } from "../../_lib/content";
+import type { D1Database } from "../../_lib/user-auth";
+import { adminAuditStatement } from "../../_lib/admin-audit";
 
-interface D1Statement { bind(...values: unknown[]): D1Statement; run(): Promise<unknown>; all<T>(): Promise<{ results: T[] }>; }
-interface D1Database { prepare(query: string): D1Statement; batch(statements: D1Statement[]): Promise<unknown>; }
 interface Context { request: Request; env: AuthEnv & { DB?: D1Database }; }
 type ContentPayload = { team: TeamMember[]; help: HelpArticle[] };
 
@@ -39,6 +39,7 @@ export const onRequestPut = async ({ request, env }: Context) => {
   const statements = [db.prepare("DELETE FROM team_members"), db.prepare("DELETE FROM help_articles")];
   payload.team.forEach((member, index) => statements.push(db.prepare("INSERT INTO team_members (id, name, role, bio, initials, sort_order) VALUES (?, ?, ?, ?, ?, ?)").bind(member.id, member.name.trim(), member.role.trim(), member.bio.trim(), member.initials.trim(), index)));
   payload.help.forEach((article, index) => statements.push(db.prepare("INSERT INTO help_articles (id, title, category, excerpt, sort_order) VALUES (?, ?, ?, ?, ?)").bind(article.id, article.title.trim(), article.category.trim(), article.excerpt.trim(), index)));
+  statements.push(await adminAuditStatement(request, env, db, "content.publish", "site_content", null, { teamCount: payload.team.length, helpCount: payload.help.length }));
   await db.batch(statements);
   return Response.json({ saved: true });
 };

@@ -1,33 +1,23 @@
 "use client";
-
-import { Bell, CheckCircle2, ChevronRight, Eye, FileText, Mail, Star, UsersRound } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { PortalShell } from "../../components/portal-shell";
-
-const notices = ["Nuevo caso preferente disponible en Derecho Penal", "Tu perfil recibió una nueva visita", "Recuerda actualizar tu modalidad de atención", "Hay casos del pool que coinciden con tus áreas"];
-
+import { NoticeCenter } from "../../components/notice-center";
+type Proposal = { id: string; case_title: string; status: string; created_at: string };
+type Review = { id: string; rating: number };
+type Profile = { full_name: string; application_status: string; credit_balance: number };
 export default function DashboardPage() {
-  return <PortalShell>
-    <div className="portal-page-heading"><div><p className="eyebrow">Panel profesional</p><h1>Buenos días, María Teresa.</h1><p>Tu actividad y oportunidades de esta semana.</p></div><button className="portal-outline-button">Ver mi perfil <ChevronRight size={17} /></button></div>
-    <section className="metric-grid" aria-label="Resumen de actividad">
-      <article><span className="metric-icon"><FileText size={20} /></span><p>Casos derivados</p><strong>7</strong><small>+7 en los últimos 30 días</small></article>
-      <article><span className="metric-icon"><Eye size={20} /></span><p>Visitas a tu perfil</p><strong>5</strong><small>+5 en los últimos 30 días</small></article>
-      <article><span className="metric-icon"><Star size={20} /></span><p>Valoración promedio</p><strong>Sin evaluaciones</strong><small>Tu reputación se mostrará aquí</small></article>
-    </section>
-    <section className="dashboard-grid">
-      <article className="portal-panel activity-panel">
-        <div className="panel-title"><div><p className="eyebrow">Actividad</p><h2>Objetivo de contactos</h2></div><span className="status-badge">Agosto 2026</span></div>
-        <div className="activity-chart" aria-label="Gráfico de actividad mensual"><div className="chart-line" /><div className="chart-dot dot-one" /><div className="chart-dot dot-two" /><div className="chart-label start">01 ago</div><div className="chart-label end">31 ago</div><div className="chart-goal">Meta mensual: 12 contactos</div></div>
-        <div className="chart-foot"><span><i /> Contactos realizados: 1</span><span><i className="gold" /> Meta definida: 12</span></div>
-      </article>
-      <article className="portal-panel notifications-panel">
-        <div className="panel-title"><div><p className="eyebrow">Bandeja</p><h2>Actividad reciente</h2></div><Bell size={20} /></div>
-        <div className="notification-list">{notices.map((notice, index) => <button className="notice-row" key={notice}><span className="notice-icon"><Mail size={16} /></span><span><b>{notice}</b><small>{index < 2 ? "Hoy" : "Esta semana"}</small></span><ChevronRight size={16} /></button>)}</div>
-      </article>
-    </section>
-    <section className="portal-panel opportunities-panel" id="preferentes">
-      <div className="panel-title"><div><p className="eyebrow">Oportunidades</p><h2>Casos preferentes para ti</h2></div><a href="/casos/pool">Ver casos del pool <ChevronRight size={16} /></a></div>
-      <div className="opportunity-row"><span className="opportunity-icon"><UsersRound size={20} /></span><div><b>Defensa en causa penal</b><p>Región Metropolitana · Atención presencial u online</p></div><span className="credit-chip">8 créditos</span><button className="portal-primary-button">Revisar caso</button></div>
-      <div className="opportunity-row" id="pool"><span className="opportunity-icon"><CheckCircle2 size={20} /></span><div><b>Orientación por accidente de tránsito</b><p>Concepción · Atención remota</p></div><span className="credit-chip">5 créditos</span><button className="portal-primary-button">Revisar caso</button></div>
-    </section>
-  </PortalShell>;
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [notice, setNotice] = useState("");
+  useEffect(() => { void Promise.all([fetch("/api/lawyer/profile"), fetch("/api/lawyer/proposals"), fetch("/api/reviews")]).then(async ([a, b, d]) => {
+    if (![a, b, d].every((response) => response.ok)) throw new Error();
+    setProfile((await a.json() as { profile: Profile }).profile);
+    setProposals((await b.json() as { proposals: Proposal[] }).proposals);
+    setReviews((await d.json() as { reviews: Review[] }).reviews);
+  }).catch(() => setNotice("No pudimos cargar toda la actividad.")); }, []);
+  const accepted = proposals.filter((proposal) => proposal.status === "accepted").length;
+  const average = reviews.length ? (reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1) : "Sin evaluaciones";
+  return <PortalShell><div className="portal-page-heading"><div><p className="eyebrow">Panel profesional</p><h1>{profile ? `Hola, ${profile.full_name.split(" ")[0]}.` : "Tu actividad"}</h1><p>Propuestas, contactos y avisos reales de tu cuenta.</p></div><Link className="portal-outline-button" href="/account">Editar mi perfil</Link></div>{notice && <p role="status" className="save-confirmation">{notice}</p>}{profile?.application_status !== "approved" && <p className="application-note">Tu perfil aún no está aprobado. <Link href="/postulacion-abogado">Revisar postulación</Link></p>}<section className="metric-grid"><article><p>Propuestas enviadas</p><strong>{proposals.length}</strong><small>{accepted} aceptadas</small></article><article><p>Contactos habilitados</p><strong>{accepted}</strong><small>Solo tras aceptación del cliente y uso de créditos</small></article><article><p>Valoración promedio</p><strong>{average}</strong><small>{reviews.length} evaluaciones verificadas</small></article></section><div className="dashboard-grid"><section className="portal-panel account-form"><h2>Mis propuestas recientes</h2>{proposals.length === 0 && <p>Aún no has enviado propuestas.</p>}{proposals.slice(0, 5).map((proposal) => <div className="notice-row" key={proposal.id}><b>{proposal.case_title}</b><span className="state-chip">{proposal.status === "accepted" ? "Aceptada" : proposal.status === "declined" ? "Descartada" : "Pendiente"}</span></div>)}<Link className="portal-primary-button" href="/casos/propuestas">Ver todas</Link></section><NoticeCenter /></div></PortalShell>;
 }

@@ -1,6 +1,7 @@
 import { isAdmin } from "../../_lib/admin-auth";
 import type { AuthEnv } from "../../_lib/github-auth";
 import type { D1Database } from "../../_lib/user-auth";
+import { adminAuditStatement } from "../../_lib/admin-audit";
 
 interface Context { request: Request; env: AuthEnv & { DB?: D1Database }; }
 type AdminCase = { id: string; category: string; title: string; status: string; credit_cost: number; created_at: string; person_name: string; person_email: string; region: string | null; commune: string | null; access_count: number; view_count: number; };
@@ -19,7 +20,11 @@ export const onRequestPatch = async ({ request, env }: Context) => {
   const id = typeof payload.id === "string" ? payload.id : "";
   const cost = Number(payload.creditCost);
   if (!id || !Number.isInteger(cost) || cost < 0 || cost > 1000) return Response.json({ error: "Indica un valor entre 0 y 1.000 créditos." }, { status: 400 });
-  const result = await env.DB.prepare("UPDATE legal_cases SET credit_cost = ?, credit_updated_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(cost, id).run();
-  if (!result.meta?.changes) return Response.json({ error: "No encontramos ese caso." }, { status: 404 });
+  const existing = await env.DB.prepare("SELECT credit_cost FROM legal_cases WHERE id = ? LIMIT 1").bind(id).first<{ credit_cost: number }>();
+  if (!existing) return Response.json({ error: "No encontramos ese caso." }, { status: 404 });
+  await env.DB.batch([
+    env.DB.prepare("UPDATE legal_cases SET credit_cost = ?, credit_updated_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(cost, id),
+    await adminAuditStatement(request, env, env.DB, "case.credit_cost", "case", id, { previous: existing.credit_cost, next: cost }),
+  ]);
   return Response.json({ saved: true, creditCost: cost });
 };
