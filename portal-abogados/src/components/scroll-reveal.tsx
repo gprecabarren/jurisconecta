@@ -15,9 +15,9 @@ export function ScrollReveal() {
         entry.target.classList.add('reveal-visible');
         observer.unobserve(entry.target);
       });
-    }, { threshold: 0.02, rootMargin: '0px 0px 15% 0px' });
+    }, { threshold: 0.02, rootMargin: '0px 0px 25% 0px' });
     elements.forEach((element) => {
-      if (element.getBoundingClientRect().top < window.innerHeight * 1.15) {
+      if (element.getBoundingClientRect().top < window.innerHeight * 1.25) {
         element.classList.add('reveal-visible');
       } else {
         element.classList.add('reveal-pending');

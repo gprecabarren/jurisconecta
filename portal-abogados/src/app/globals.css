@@ -568,9 +568,9 @@ input::placeholder, textarea::placeholder { font-weight: 400; opacity: 1; }
 .role-option strong { font-weight: 500; }
 
 /* Only off-screen elements are hidden after the client observer starts. */
-[data-reveal].reveal-pending { opacity: 0; transform: translate3d(0, 23px, 0); }
+[data-reveal].reveal-pending { opacity: .62; transform: translate3d(0, 12px, 0); }
 [data-reveal].reveal-visible { opacity: 1; transform: none; }
-[data-reveal].reveal-pending, [data-reveal].reveal-visible { transition: opacity .62s ease, transform .62s cubic-bezier(.2,.75,.2,1); }
+[data-reveal].reveal-pending, [data-reveal].reveal-visible { transition: opacity .42s ease, transform .42s cubic-bezier(.2,.75,.2,1); }
 .steps-grid [data-reveal]:nth-child(2), .trust-cards [data-reveal]:nth-child(2), .article-grid [data-reveal]:nth-child(2) { transition-delay: 70ms; }
 .steps-grid [data-reveal]:nth-child(3), .trust-cards [data-reveal]:nth-child(3), .article-grid [data-reveal]:nth-child(3) { transition-delay: 140ms; }
 #como-funciona, #casos, #confianza, #mis-tickets, #redes, #vista-previa { scroll-margin-top: 106px; }
