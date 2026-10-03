@@ -37,6 +37,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
         { href: "/admin#casos", label: "Casos y créditos", icon: WalletCards },
         { href: "/admin#equipo", label: "Equipo", icon: UsersRound },
         { href: "/admin#redes", label: "Redes sociales", icon: ContactRound },
+        { href: "/admin#configuracion", label: "Configuración", icon: Settings2 },
         { href: "/admin#vista-previa", label: "Vista previa", icon: Eye },
         { href: "/admin#soporte", label: "Centro de ayuda", icon: CircleHelp },
         { href: "/admin#tickets", label: "Tickets", icon: CircleHelp },

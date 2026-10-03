@@ -14,14 +14,15 @@ Portal chileno para conectar personas con abogados verificados. Sitio: [juriscon
 
 | Área | Estado |
 | --- | --- |
-| Portada y contenido | Inicio, catálogo legal, equipo, ayuda; header público persistente con **iniciar sesión** y **registrarse**, redes oficiales administrables y footer social. Manrope, estilo propio redondeado y apariciones suaves al desplazar, desactivadas con movimiento reducido. |
+| Portada y contenido | Inicio, catálogo legal, equipo, ayuda; header público persistente con **iniciar sesión** y **registrarse**. Facebook, Instagram, LinkedIn, WhatsApp y correo aparecen en ese orden en header/footer; sin enlaces oficiales son iconos desactivados. Manrope y estilo redondeado. En el home, textos y bloques entran alternadamente desde izquierda/derecha al desplazarse, también en móvil; se respeta movimiento reducido. |
 | Cuentas | Registro y login por correo para personas/abogados; admin por GitHub OAuth (login autorizado `gprecabarren`). Cambio de contraseña profesional, recuperación asistida con código de 30 minutos y verificación manual de identidad. |
 | Sesiones | Registro de navegador/dispositivo y ubicación aproximada, lista de sesiones activas y cierre selectivo. La ubicación puede ser inexacta por VPN. La sesión se vuelve inválida al deshabilitar/eliminar la cuenta o cambiar/restablecer la contraseña. Las cookies antiguas sin ID de sesión deberán volver a iniciar sesión después del despliegue de este cambio. |
 | Perfil profesional | Datos, especialidades, presentación y foto comprimida persistidos. Postulación sin archivos; aprobación solo tras revisión manual documentada. |
 | Casos | Clientes publican y cierran casos; abogados aprobados revisan pool/preferentes. Hasta tres propuestas por caso, comparación y aceptación/descartar desde la vista del cliente. **El contacto solo puede desbloquearlo el abogado aceptado** con créditos de prueba; una regla de D1 también lo impide sin aceptación. |
 | Seguimiento cliente | `/cliente` y `/cliente/caso?id=…`: estado, etapas, vistas, propuestas y evaluación luego del cierre. Son hitos de la plataforma, **no un expediente judicial sincronizado**. |
-| Soporte | FAQ primero, medios de contacto, tickets de usuarios autenticados, hilo y respuestas; bandeja administrativa y notificaciones internas. El correo `hola@jurisconecta.cl` se muestra como canal, pero no se sincroniza con tickets ni se ha verificado aquí su entrega. |
-| Administración | Bandeja de tickets, postulaciones, costos en créditos, contenido, redes oficiales, recuperación, directorio paginado de clientes/abogados con detalle y casos, habilitar/deshabilitar/eliminar cuentas mediante confirmación. Vista previa de registro cliente/abogado y pasos del caso usando los mismos formularios, sin crear datos y con avance libre más advertencias. Bitácora de cambios administrativos con hora UTC y login de GitHub. Las acciones anteriores a la bitácora no se pueden reconstruir. |
+| Soporte | FAQ primero, medios de contacto, tickets de usuarios autenticados, hilo y respuestas; bandeja administrativa y notificaciones internas. El correo se muestra solo cuando se configure una dirección oficial desde `/admin#redes`; no se sincroniza con tickets. |
+| Administración | Bandeja de tickets, postulaciones, costos en créditos, contenido, redes oficiales/correo, recuperación, directorio paginado de clientes/abogados con detalle y casos, habilitar/deshabilitar/eliminar cuentas mediante confirmación. Vista previa de registro cliente/abogado y pasos del caso usando los mismos formularios, sin crear datos y con avance libre más advertencias. Modo mantenimiento desde `/admin#configuracion`, apagado por defecto; deja accesibles `/admin` y OAuth GitHub, y registra el cambio en la bitácora con hora UTC y login. Las acciones anteriores a la bitácora no se pueden reconstruir. |
+| SEO técnico | Títulos y metadescripciones por ruta, URL canónica, etiquetas Open Graph/Twitter e imagen social propia, favicon SVG, `robots.txt` y `sitemap.xml`. Solo inicio, equipo y soporte están en el sitemap; formularios, paneles, mantenimiento y **textos legales todavía en borrador** llevan `noindex`. Títulos/H1/H2 del home se orientan a búsquedas de abogados en Chile y áreas de familia, civil, laboral y penal con redacción original. |
 | Control de cuenta | Clientes y abogados pueden deshabilitar o eliminar su propia cuenta desde su panel, con contraseña y confirmación; la eliminación borra datos asociados por cascada y deja un registro mínimo sin identificación personal. |
 | Evaluaciones | Cliente evalúa al abogado aceptado solo después de cerrar el caso; abogado ve sus evaluaciones reales. |
 | Textos legales | `/privacidad` y `/terminos` son **borradores**, no documentos aprobados para captar casos reales. |
@@ -31,7 +32,7 @@ Portal chileno para conectar personas con abogados verificados. Sitio: [juriscon
 `/api/auth/{register,login,logout,me,profile,password,recovery,account,sessions}`,
 `/api/cases`, `/api/client/proposals`, `/api/lawyer/{profile,application,cases,plans,proposals}`,
 `/api/{tickets,notifications,notifications/preferences,reviews,content,health}` y
-`/api/admin/{applications,cases,content,profiles,tickets,recovery,users,audit,sessions}`.
+`/api/admin/{applications,cases,content,profiles,tickets,recovery,users,audit,sessions,settings}`.
 GitHub OAuth usa `/auth/github/login` y `/auth/github/callback`.
 Todas las rutas administrativas comprueban la sesión GitHub autorizada; las privadas por rol comprueban la sesión de usuario.
 
@@ -41,9 +42,18 @@ Todas las rutas administrativas comprueban la sesión GitHub autorizada; las pri
 
 - `0007_interactions_and_support.sql`: propuestas limitadas, aceptación previa a contacto, tickets, avisos, evaluaciones, recuperación, avatar y versionado de sesión.
 - `0008_account_control_and_audit.sql`: sesiones de usuarios y administradores, bitácora y registro mínimo de eliminaciones.
-- `0009_site_social_links.sql`: redes oficiales configurables desde administración, visibles solo al ingresar enlaces HTTPS válidos de cada plataforma. No hay enlaces predeterminados ni se copian los de Chile3X.
+- `0009_site_social_links.sql`: redes oficiales configurables desde administración. No hay enlaces predeterminados ni se copian los de Chile3X.
+- `0010_site_settings.sql`: bandera de mantenimiento apagada y correo de contacto vacío por defecto.
 
-Las migraciones `0007` y `0008` se aplicaron previamente solo a `jurisconecta-db`. La `0009` se probó con todas las anteriores en D1 local aislado y se aplicó **solo** a esa base el 2 de octubre, tras comprobar el esquema y obtener un bookmark de Time Travel. Como las migraciones históricas se ejecutaron manualmente, `wrangler d1 migrations list --remote` aún las muestra pendientes: **no ejecutar `migrations apply --remote` en bloque**. La ventana gratuita de recuperación de D1 es limitada.
+Las migraciones `0007` y `0008` se aplicaron previamente solo a `jurisconecta-db`. La `0009` se aplicó el 2 de octubre. La `0010` se probó con todas las anteriores en D1 local aislado y se aplicó **solo** a esa base el 2 de octubre, tras comprobar el esquema y obtener el bookmark previo `0000001f-00000000-000050f9-0aae7327ccb2345085c9265d7390dae6`. Como las migraciones históricas se ejecutaron manualmente, `wrangler d1 migrations list --remote` aún las muestra pendientes: **no ejecutar `migrations apply --remote` en bloque**. La ventana gratuita de recuperación de D1 es limitada.
+
+Si el administrador activa mantenimiento por error, debe entrar por `/admin` y desactivarlo en Configuración. Como recuperación excepcional, tras confirmar base y cuenta de Cloudflare correctas, se puede ejecutar `wrangler d1 execute jurisconecta-db --remote --command "UPDATE site_settings SET maintenance_enabled = 0 WHERE id = 1"`. Esta acción directa no pasa por la bitácora de la interfaz; documentar quién la hizo y cuándo. No activar mantenimiento para probar sobre usuarios reales: usar la D1 local aislada.
+
+## SEO y medición pendientes
+
+- Las búsquedas objetivo iniciales son «abogados en Chile», «encontrar abogado», «abogado de familia», «abogado laboral», «abogado civil» y «abogado penal». El contenido y metadatos son originales; NexoAbogados es referencia de intención y flujo, no una fuente de textos para copiar.
+- Cuando se creen Google Search Console, Analytics y Semrush: verificar el dominio, enviar `https://jurisconecta.cl/sitemap.xml`, revisar cobertura e indexación/canonicals, configurar Analytics solo con el ID y consentimiento aplicables, y usar Semrush para brechas de contenido. No hay rastreadores ni etiquetas de verificación inventadas en el código.
+- Las páginas de áreas legales aún no tienen contenido editorial propio. Para competir orgánicamente harán falta páginas útiles por materia, revisión jurídica, perfiles públicos verificables, enlaces internos y medición real; etiquetas por sí solas no aseguran posicionamiento.
 
 ## Desarrollo, compilación y despliegue
 
@@ -67,6 +77,7 @@ El despliegue solo debe utilizar `wrangler.jsonc` de este directorio y el Worker
 6. Revisar directorio de usuarios, detalle/casos, bitácora y recuperación asistida. Probar deshabilitar, reactivar y eliminar **solo las cuentas ficticias creadas para la prueba**, confirmando que ya no aparecen ni pueden iniciar sesión.
 7. Verificar permisos cruzados: cliente no ve `/admin` ni APIs de abogado; abogado no ve casos privados ajenos; usuario sin sesión recibe 401; probar teclado, lector de pantalla, errores y diseño móvil.
 8. Desde `/admin#redes`, agregar una URL oficial de prueba propia, verificarla en header/footer de inicio, equipo y soporte, y retirarla. Desde `/admin#vista-previa`, revisar ambos registros y los tres pasos del caso con campos vacíos; comprobar advertencias y que no se crean cuentas ni casos. Validar header fijo y animaciones en móvil/escritorio y con movimiento reducido.
+9. Revisar metadatos de inicio/equipo/soporte, imagen social y favicon al compartir enlaces; verificar `robots.txt`, `sitemap.xml`, canonicals, una H1 por página y `noindex` en paneles. En D1 local activar/desactivar mantenimiento: páginas y API públicas deben responder 503, `/admin` debe redirigir a GitHub, y la API admin debe exigir sesión. No activar esta bandera en producción durante pruebas.
 
 ## Qué falta antes de invitar usuarios reales
 

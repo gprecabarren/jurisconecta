@@ -17,6 +17,7 @@ import { onRequestGet as getAdminRecovery, onRequestPatch as updateAdminRecovery
 import { onRequestGet as getAdminAudit } from "../functions/api/admin/audit";
 import { onRequestGet as getAdminUsers, onRequestPatch as updateAdminUser, onRequestDelete as deleteAdminUser } from "../functions/api/admin/users";
 import { onRequestGet as getAdminSessions, onRequestDelete as deleteAdminSession } from "../functions/api/admin/sessions";
+import { onRequestGet as getAdminSettings, onRequestPatch as updateAdminSettings } from "../functions/api/admin/settings";
 import { onRequestPost as login } from "../functions/api/auth/login";
 import { onRequestPost as logout } from "../functions/api/auth/logout";
 import { onRequestGet as getCurrentUser } from "../functions/api/auth/me";
@@ -180,6 +181,11 @@ async function dispatchApi(request: Request, env: AppEnv, pathname: string): Pro
     if (method === "DELETE") return deleteAdminSession({ request, env });
     return methodNotAllowed(["GET", "DELETE"]);
   }
+  if (pathname === "/api/admin/settings") {
+    if (method === "GET") return getAdminSettings({ request, env });
+    if (method === "PATCH") return updateAdminSettings({ request, env });
+    return methodNotAllowed(["GET", "PATCH"]);
+  }
 
   const documentMatch = pathname.match(/^\/api\/admin\/application-document\/([^/]+)$/);
   if (documentMatch) {
@@ -217,6 +223,17 @@ export default {
     }
 
     try {
+      const maintenanceExempt = routePrefix(url.pathname, "/admin") || routePrefix(url.pathname, "/api/admin") || routePrefix(url.pathname, "/auth/github") || routePrefix(url.pathname, "/_next") || routePrefix(url.pathname, "/mantenimiento") || url.pathname === "/api/health" || url.pathname === "/icon.svg" || url.pathname === "/og-jurisconecta.png";
+      if (!maintenanceExempt) {
+        const settings = await env.DB.prepare("SELECT maintenance_enabled FROM site_settings WHERE id = 1").first<{ maintenance_enabled: number }>();
+        if (settings?.maintenance_enabled === 1) {
+          const headers = { "Cache-Control": "no-store", "Retry-After": "3600", "X-Robots-Tag": "noindex, nofollow" };
+          if (routePrefix(url.pathname, "/api")) return Response.json({ error: "JurisConecta está en mantenimiento." }, { status: 503, headers });
+          const maintenanceUrl = new URL("/mantenimiento/", url);
+          const page = await env.ASSETS.fetch(new Request(maintenanceUrl, { method: "GET" }));
+          return new Response(request.method === "HEAD" ? null : page.body, { status: 503, headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } });
+        }
+      }
       if (routePrefix(url.pathname, "/api")) return await dispatchApi(request, env, url.pathname);
       if (url.pathname === "/auth/github/login") return request.method === "GET" ? githubLogin({ request, env }) : methodNotAllowed(["GET"]);
       if (url.pathname === "/auth/github/callback") return request.method === "GET" ? githubCallback({ request, env }) : methodNotAllowed(["GET"]);
