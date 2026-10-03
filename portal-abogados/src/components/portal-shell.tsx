@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, CircleHelp, ContactRound, FileCheck2, LayoutDashboard, LogOut, Scale, Settings2, Star, UsersRound, WalletCards } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CircleHelp, ContactRound, Eye, FileCheck2, LayoutDashboard, LogOut, Scale, Settings2, Star, UsersRound, WalletCards } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
@@ -36,6 +36,8 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
         { href: "/admin#postulaciones", label: "Postulaciones", icon: FileCheck2 },
         { href: "/admin#casos", label: "Casos y créditos", icon: WalletCards },
         { href: "/admin#equipo", label: "Equipo", icon: UsersRound },
+        { href: "/admin#redes", label: "Redes sociales", icon: ContactRound },
+        { href: "/admin#vista-previa", label: "Vista previa", icon: Eye },
         { href: "/admin#soporte", label: "Centro de ayuda", icon: CircleHelp },
         { href: "/admin#tickets", label: "Tickets", icon: CircleHelp },
         { href: "/admin#recuperacion", label: "Recuperación", icon: Settings2 },

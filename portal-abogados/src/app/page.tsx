@@ -11,7 +11,6 @@ import {
   Gavel,
   MapPin,
   MessageSquareText,
-  Scale,
   Search,
   ShieldCheck,
   Sparkles,
@@ -37,22 +36,9 @@ export default function Home() {
 
   return (
     <main>
-      <header className="site-header">
-        <Link className="brand" href="/" aria-label="JurisConecta inicio">
-          <span className="brand-mark"><Scale size={22} strokeWidth={2.6} /></span>
-          <span>Juris<span>Conecta</span></span>
-        </Link>
-        <nav aria-label="Navegación principal">
-          <a href="#como-funciona">Cómo funciona</a>
-          <a href="#casos">Casos</a>
-          <a href="#confianza">Por qué elegirnos</a>
-          <Link href="/soporte">Soporte</Link>
-        </nav>
-        <div className="header-actions"><Link className="client-login-link" href="/ingresar">Iniciar sesión clientes</Link><Link className="lawyer-link" href="/registro?tipo=abogado">¿Eres abogado?<ArrowRight size={15} /></Link></div>
-      </header>
 
       <section className="hero">
-        <div className="hero-copy">
+        <div className="hero-copy" data-reveal>
           <p className="eyebrow">Orientación legal en Chile</p>
           <h1>Encuentra la ayuda legal que necesitas.</h1>
           <p className="hero-description">Describe tu situación y conecta con profesionales que trabajan en la materia y zona que necesitas.</p>
@@ -63,7 +49,7 @@ export default function Home() {
           </ul>
           <Link className="primary-button" href="/registro">Encontrar un abogado <ArrowRight size={18} /></Link>
         </div>
-        <div className="hero-panel" aria-label="Resumen de solicitud legal">
+        <div className="hero-panel" aria-label="Resumen de solicitud legal" data-reveal>
           <div className="panel-topline"><span className="status-dot" />Solicitud en pocos pasos</div>
           <div className="panel-body">
             <span className="panel-icon"><Gavel size={28} /></span>
@@ -78,14 +64,14 @@ export default function Home() {
       </section>
 
       <section id="como-funciona" className="how-section section-shell">
-        <div className="section-heading centered">
+        <div className="section-heading centered" data-reveal>
           <p className="eyebrow">Así de simple</p>
           <h2>Una forma clara de comenzar</h2>
         </div>
         <div className="steps-grid">
           {steps.map((step, index) => {
             const Icon = step.icon;
-            return <article className="step" key={step.title}>
+            return <article className="step" key={step.title} data-reveal>
               <span className="step-number">0{index + 1}</span>
               <span className="step-icon"><Icon size={24} /></span>
               <h3>{step.title}</h3>
@@ -97,14 +83,14 @@ export default function Home() {
 
       <section id="casos" className="finder-section">
         <div className="section-shell">
-          <div className="section-heading finder-heading">
+          <div className="section-heading finder-heading" data-reveal>
             <div>
               <p className="eyebrow">Primer paso</p>
               <h2>¿En qué necesitas apoyo?</h2>
             </div>
             <p>Elige una categoría y luego el tipo de caso. Podrás entregar más detalles después.</p>
           </div>
-          <div className="finder-layout">
+          <div className="finder-layout" data-reveal>
             <div className="area-menu" role="tablist" aria-label="Áreas legales">
               {areas.map((area) => (
                 <button
@@ -140,32 +126,26 @@ export default function Home() {
       </section>
 
       <section id="confianza" className="trust-section section-shell">
-        <div className="trust-copy">
+        <div className="trust-copy" data-reveal>
           <p className="eyebrow">Hecho para decidir informado</p>
           <h2>Tu información se trata con seriedad.</h2>
           <p>No somos un estudio jurídico ni reemplazamos el consejo profesional. Somos el espacio para que personas y abogados se encuentren con contexto y transparencia.</p>
           <Link href="/registro" className="text-link">Crear una cuenta <ArrowRight size={16} /></Link>
         </div>
         <div className="trust-cards">
-          <article><ShieldCheck size={24} /><h3>Contacto protegido</h3><p>Solo el profesional que aceptas puede desbloquear tu contacto con créditos de prueba.</p></article>
-          <article><MapPin size={24} /><h3>Cobertura nacional</h3><p>Indica región, comuna y modalidad de atención al publicar tu solicitud.</p></article>
-          <article><BriefcaseBusiness size={24} /><h3>Revisión profesional</h3><p>Los abogados deben pasar una aprobación antes de acceder al contacto de las personas.</p></article>
+          <article data-reveal><ShieldCheck size={24} /><h3>Contacto protegido</h3><p>Solo el profesional que aceptas puede desbloquear tu contacto con créditos de prueba.</p></article>
+          <article data-reveal><MapPin size={24} /><h3>Cobertura nacional</h3><p>Indica región, comuna y modalidad de atención al publicar tu solicitud.</p></article>
+          <article data-reveal><BriefcaseBusiness size={24} /><h3>Revisión profesional</h3><p>Los abogados deben pasar una aprobación antes de acceder al contacto de las personas.</p></article>
         </div>
       </section>
 
       <section className="join-section">
-        <div className="section-shell join-layout">
+        <div className="section-shell join-layout" data-reveal>
           <div><Sparkles size={25} /><h2>¿Eres abogado o abogada?</h2><p>Crea un perfil profesional, define tus materias y recibe oportunidades relevantes.</p></div>
           <Link className="secondary-button" href="/registro?tipo=abogado">Crear perfil profesional <ArrowRight size={18} /></Link>
         </div>
       </section>
 
-      <footer className="site-footer section-shell">
-        <div className="footer-brand"><Link className="brand" href="/"><span className="brand-mark"><Scale size={20} /></span><span>Juris<span>Conecta</span></span></Link><p>Conexiones legales claras para Chile.</p></div>
-        <div><h3>Personas</h3><Link href="/registro">Publicar un caso</Link><Link href="/ingresar">Iniciar sesión</Link><Link href="/cliente">Seguir mis casos</Link></div>
-        <div><h3>Profesionales</h3><Link href="/registro?tipo=abogado">Crear perfil</Link><Link href="/ingresar">Ingresar</Link></div>
-        <div><h3>Soporte</h3><Link href="/soporte">Ayuda y tickets</Link><Link href="/privacidad">Privacidad</Link><Link href="/terminos">Términos</Link></div>
-      </footer>
     </main>
   );
 }

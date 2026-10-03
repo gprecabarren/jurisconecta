@@ -14,14 +14,14 @@ Portal chileno para conectar personas con abogados verificados. Sitio: [juriscon
 
 | Área | Estado |
 | --- | --- |
-| Portada y contenido | Inicio, catálogo legal, equipo, ayuda; enlace de **iniciar sesión para clientes** en el header. Manrope y estilo propio redondeado. |
+| Portada y contenido | Inicio, catálogo legal, equipo, ayuda; header público persistente con **iniciar sesión** y **registrarse**, redes oficiales administrables y footer social. Manrope, estilo propio redondeado y apariciones suaves al desplazar, desactivadas con movimiento reducido. |
 | Cuentas | Registro y login por correo para personas/abogados; admin por GitHub OAuth (login autorizado `gprecabarren`). Cambio de contraseña profesional, recuperación asistida con código de 30 minutos y verificación manual de identidad. |
 | Sesiones | Registro de navegador/dispositivo y ubicación aproximada, lista de sesiones activas y cierre selectivo. La ubicación puede ser inexacta por VPN. La sesión se vuelve inválida al deshabilitar/eliminar la cuenta o cambiar/restablecer la contraseña. Las cookies antiguas sin ID de sesión deberán volver a iniciar sesión después del despliegue de este cambio. |
 | Perfil profesional | Datos, especialidades, presentación y foto comprimida persistidos. Postulación sin archivos; aprobación solo tras revisión manual documentada. |
 | Casos | Clientes publican y cierran casos; abogados aprobados revisan pool/preferentes. Hasta tres propuestas por caso, comparación y aceptación/descartar desde la vista del cliente. **El contacto solo puede desbloquearlo el abogado aceptado** con créditos de prueba; una regla de D1 también lo impide sin aceptación. |
 | Seguimiento cliente | `/cliente` y `/cliente/caso?id=…`: estado, etapas, vistas, propuestas y evaluación luego del cierre. Son hitos de la plataforma, **no un expediente judicial sincronizado**. |
 | Soporte | FAQ primero, medios de contacto, tickets de usuarios autenticados, hilo y respuestas; bandeja administrativa y notificaciones internas. El correo `hola@jurisconecta.cl` se muestra como canal, pero no se sincroniza con tickets ni se ha verificado aquí su entrega. |
-| Administración | Bandeja de tickets, postulaciones, costos en créditos, contenido, recuperación, directorio paginado de clientes/abogados con detalle y casos, habilitar/deshabilitar/eliminar cuentas mediante confirmación. Bitácora de cambios administrativos con hora UTC y login de GitHub. Las acciones anteriores a la bitácora no se pueden reconstruir. |
+| Administración | Bandeja de tickets, postulaciones, costos en créditos, contenido, redes oficiales, recuperación, directorio paginado de clientes/abogados con detalle y casos, habilitar/deshabilitar/eliminar cuentas mediante confirmación. Vista previa de registro cliente/abogado y pasos del caso usando los mismos formularios, sin crear datos y con avance libre más advertencias. Bitácora de cambios administrativos con hora UTC y login de GitHub. Las acciones anteriores a la bitácora no se pueden reconstruir. |
 | Control de cuenta | Clientes y abogados pueden deshabilitar o eliminar su propia cuenta desde su panel, con contraseña y confirmación; la eliminación borra datos asociados por cascada y deja un registro mínimo sin identificación personal. |
 | Evaluaciones | Cliente evalúa al abogado aceptado solo después de cerrar el caso; abogado ve sus evaluaciones reales. |
 | Textos legales | `/privacidad` y `/terminos` son **borradores**, no documentos aprobados para captar casos reales. |
@@ -41,8 +41,9 @@ Todas las rutas administrativas comprueban la sesión GitHub autorizada; las pri
 
 - `0007_interactions_and_support.sql`: propuestas limitadas, aceptación previa a contacto, tickets, avisos, evaluaciones, recuperación, avatar y versionado de sesión.
 - `0008_account_control_and_audit.sql`: sesiones de usuarios y administradores, bitácora y registro mínimo de eliminaciones.
+- `0009_site_social_links.sql`: redes oficiales configurables desde administración, visibles solo al ingresar enlaces HTTPS válidos de cada plataforma. No hay enlaces predeterminados ni se copian los de Chile3X.
 
-Ambas fueron probadas en D1 local aislado y aplicadas **solo** a `jurisconecta-db` el 2 de octubre. No volver a ejecutar una migración con `ALTER TABLE` sin comprobar el esquema remoto. Se obtuvo un bookmark de Time Travel antes de migrar; la ventana gratuita de recuperación de D1 es limitada.
+Las migraciones `0007` y `0008` se aplicaron previamente solo a `jurisconecta-db`. La `0009` se probó con todas las anteriores en D1 local aislado y se aplicó **solo** a esa base el 2 de octubre, tras comprobar el esquema y obtener un bookmark de Time Travel. Como las migraciones históricas se ejecutaron manualmente, `wrangler d1 migrations list --remote` aún las muestra pendientes: **no ejecutar `migrations apply --remote` en bloque**. La ventana gratuita de recuperación de D1 es limitada.
 
 ## Desarrollo, compilación y despliegue
 
@@ -65,6 +66,7 @@ El despliegue solo debe utilizar `wrangler.jsonc` de este directorio y el Worker
 5. Abogado aprobado envía propuesta; cliente compara y acepta. Antes de aceptación, el desbloqueo debe devolver 403. Después de aceptación, solo ese abogado puede desbloquear el contacto con créditos de prueba. Cerrar caso y registrar una evaluación.
 6. Revisar directorio de usuarios, detalle/casos, bitácora y recuperación asistida. Probar deshabilitar, reactivar y eliminar **solo las cuentas ficticias creadas para la prueba**, confirmando que ya no aparecen ni pueden iniciar sesión.
 7. Verificar permisos cruzados: cliente no ve `/admin` ni APIs de abogado; abogado no ve casos privados ajenos; usuario sin sesión recibe 401; probar teclado, lector de pantalla, errores y diseño móvil.
+8. Desde `/admin#redes`, agregar una URL oficial de prueba propia, verificarla en header/footer de inicio, equipo y soporte, y retirarla. Desde `/admin#vista-previa`, revisar ambos registros y los tres pasos del caso con campos vacíos; comprobar advertencias y que no se crean cuentas ni casos. Validar header fijo y animaciones en móvil/escritorio y con movimiento reducido.
 
 ## Qué falta antes de invitar usuarios reales
 

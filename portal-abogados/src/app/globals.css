@@ -537,3 +537,83 @@ body { font-size: 16px; line-height: 1.55; }
 .notice-center-list{display:grid;gap:.6rem}.notice-center-item{display:flex;justify-content:space-between;gap:1rem;padding:.85rem;border:1px solid #e1e8e1;border-radius:14px;background:#fff}.notice-center-item.unread{background:#eef7ef;border-color:#b4d0b8}.notice-center-item p{margin:.3rem 0}.notice-center-item>div:last-child{display:flex;align-items:flex-start;gap:.6rem;flex-wrap:wrap}.notice-center-item button{border:0;background:transparent;color:#235d3a;text-decoration:underline;cursor:pointer;font:inherit}
 .support-hero>svg{display:block;margin:0 auto 18px}.ticket-card,.session-card,.user-directory-row,.notice-center-item{color:#172b2d}.article-card summary{width:100%}.article-card h3{margin:.45rem 0;font-size:1.3rem;line-height:1.25}.support-faq .article-grid{margin-top:1.5rem}.support-ticket-zone>.section-heading{margin-bottom:1.5rem}
 @media(max-width:620px){.session-card .portal-outline-button,.user-detail .portal-outline-button,.ticket-card .portal-outline-button,.proposal-actions .portal-outline-button,.settings-stack .portal-outline-button,.client-case-actions .portal-outline-button{display:inline-flex}}
+
+/* Public navigation and administrator-managed official social links. */
+.site-header.public-site-header { min-height: 76px; height: auto; position: sticky; top: 0; z-index: 110; gap: 22px; padding-top: 11px; padding-bottom: 11px; background: rgba(8, 21, 34, .96); box-shadow: 0 10px 28px rgba(2, 9, 15, .16); }
+.public-site-header .public-main-nav { min-width: 0; margin-left: auto; gap: clamp(11px, 1.6vw, 25px); }
+.public-site-header .public-main-nav a { white-space: nowrap; }
+.public-header-right { display: flex; align-items: center; gap: 15px; flex: 0 0 auto; }
+.public-site-header .header-actions { gap: 9px; flex-wrap: nowrap; }
+.public-site-header .client-login-link { display: inline-flex; align-items: center; min-height: 41px; padding: 8px 11px; border: 1px solid rgba(235, 197, 148, .55); border-radius: 999px; color: var(--ink); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.public-site-header .client-login-link:hover { color: var(--gold-light); border-color: var(--gold-light); text-decoration: none; }
+.public-site-header .lawyer-link { min-height: 41px; padding: 8px 13px; white-space: nowrap; font-size: 12px; }
+.site-social-links { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.site-social-links a { width: 33px; height: 33px; display: inline-grid; place-items: center; border: 1px solid rgba(235, 197, 148, .35); border-radius: 50%; color: var(--gold-light); background: rgba(235, 197, 148, .07); transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+.site-social-links a:hover { transform: translateY(-2px); border-color: var(--gold-light); background: rgba(235, 197, 148, .17); }
+.site-social-links .social-letter { font-size: 16px; font-weight: 600; line-height: 1; }
+.site-social-links .social-letter-in { font-size: 12px; font-weight: 800; }
+.footer-social { margin-top: 24px; }
+.footer-social h3 { margin-bottom: 10px; }
+.site-social-links-footer a { width: 38px; height: 38px; }
+.social-manager { margin-top: 20px; }
+.social-manager .panel-title p:not(.eyebrow) { max-width: 680px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.social-managed-row small { max-width: 100%; overflow-wrap: anywhere; }
+.social-manager-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 500; }
+.social-manager-form select, .social-manager-form input { width: min(100%, 570px); }
+
+/* Form copy stays light; buttons and section headings retain their hierarchy. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea { font-weight: 400 !important; }
+input::placeholder, textarea::placeholder { font-weight: 400; opacity: 1; }
+.auth-form label, .auth-form legend, .field, .settings-stack label, .ticket-layout label, .manager-form label, .case-details-form label { font-weight: 500; }
+.role-option strong { font-weight: 500; }
+
+/* Only off-screen elements are hidden after the client observer starts. */
+[data-reveal].reveal-pending { opacity: 0; transform: translate3d(0, 23px, 0); }
+[data-reveal].reveal-visible { opacity: 1; transform: none; }
+[data-reveal].reveal-pending, [data-reveal].reveal-visible { transition: opacity .62s ease, transform .62s cubic-bezier(.2,.75,.2,1); }
+.steps-grid [data-reveal]:nth-child(2), .trust-cards [data-reveal]:nth-child(2), .article-grid [data-reveal]:nth-child(2) { transition-delay: 70ms; }
+.steps-grid [data-reveal]:nth-child(3), .trust-cards [data-reveal]:nth-child(3), .article-grid [data-reveal]:nth-child(3) { transition-delay: 140ms; }
+#como-funciona, #casos, #confianza, #mis-tickets, #redes, #vista-previa { scroll-margin-top: 106px; }
+
+/* The admin preview renders the real forms without sidebars or writes. */
+.admin-preview { margin-top: 20px; padding: 28px; }
+.admin-preview .panel-title p:not(.eyebrow) { max-width: 750px; color: var(--muted); line-height: 1.55; }
+.admin-preview-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0; }
+.admin-preview-tabs button { min-height: 41px; padding: 8px 15px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--canvas-deep); font: inherit; font-size: 13px; cursor: pointer; }
+.admin-preview-tabs button.active { color: var(--canvas-deep); border-color: var(--gold); background: var(--gold-light); }
+.admin-preview-stage { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--canvas-deep); }
+.preview-auth-page { min-height: 0; padding: 25px 18px 38px; background: transparent; }
+.preview-auth-page::before { content: none; }
+.preview-auth-page .auth-brand { margin-bottom: 22px; }
+.preview-auth-page .auth-card { max-width: 640px; }
+.preview-case-shell { padding: 28px; }
+.preview-case-shell .publish-layout, .preview-case-shell .case-details-panel, .preview-case-shell .case-review-panel { max-width: 100%; }
+.preview-banner { margin: 15px 0; padding: 12px 15px; border: 1px solid #876f4f; border-radius: 12px; color: var(--gold-light); background: #26251e; font-size: 13px; line-height: 1.55; }
+.preview-validation { margin: 15px 0; }
+.publish-steps .publish-step-pair { display: inline-flex; align-items: center; gap: 8px; width: auto; height: auto; border: 0; border-radius: 0; color: inherit; background: transparent; }
+.publish-steps .publish-step-pair > span, .publish-steps .publish-step-pair > button { width: 29px; height: 29px; display: inline-grid; place-items: center; border: 1px solid #43505a; border-radius: 50%; color: var(--quiet); background: transparent; font: inherit; font-size: 12px; font-weight: 700; }
+.publish-steps .publish-step-pair > .current { color: var(--canvas-deep); border-color: var(--gold); background: var(--gold); }
+.publish-steps .publish-step-pair > button { cursor: pointer; }
+
+@media (max-width: 1180px) { .public-site-header .public-main-nav { display: none; } }
+@media (max-width: 760px) {
+  .site-header.public-site-header { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; }
+  .public-site-header .public-header-right { display: contents; }
+  .public-site-header .header-actions { grid-column: 2; grid-row: 1; }
+  .public-site-header .site-social-links-header { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
+  .preview-case-shell { padding: 18px; }
+}
+@media (max-width: 540px) {
+  .site-header.public-site-header { grid-template-columns: 1fr; padding: 8px 16px; }
+  .public-site-header .brand { font-size: 17px; }
+  .public-site-header .header-actions { grid-column: 1; grid-row: 2; justify-content: space-between; }
+  .public-site-header .client-login-link { min-height: 38px; }
+  .public-site-header .lawyer-link { min-height: 38px; padding: 8px 12px; font-size: 12px; }
+  .public-site-header .site-social-links-header { grid-row: 3; }
+  .admin-preview { padding: 18px; }
+  .preview-auth-page { padding: 18px 10px 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal].reveal-pending, [data-reveal].reveal-visible { opacity: 1; transform: none; transition: none; }
+  .site-social-links a { transition: none; }
+}
