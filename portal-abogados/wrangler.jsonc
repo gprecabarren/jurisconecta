@@ -17,7 +17,8 @@
     }
   ],
   "vars": {
-    "LAWYER_APPLICATION_UPLOADS_ENABLED": "false"
+    "LAWYER_APPLICATION_UPLOADS_ENABLED": "false",
+    "GOOGLE_CLIENT_ID": "925524109245-p9m64mblahcfo0drr964n5s334e100qm.apps.googleusercontent.com"
   },
   "d1_databases": [
     {

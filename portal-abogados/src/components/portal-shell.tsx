@@ -38,6 +38,8 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
         { href: "/admin#equipo", label: "Equipo", icon: UsersRound },
         { href: "/admin#redes", label: "Redes sociales", icon: ContactRound },
         { href: "/admin#configuracion", label: "Configuración", icon: Settings2 },
+        { href: "/admin/noticias", label: "Noticias y SEO", icon: FileCheck2 },
+        { href: "/admin#medicion", label: "Medición", icon: BarChart3 },
         { href: "/admin#vista-previa", label: "Vista previa", icon: Eye },
         { href: "/admin#soporte", label: "Centro de ayuda", icon: CircleHelp },
         { href: "/admin#tickets", label: "Tickets", icon: CircleHelp },
@@ -67,7 +69,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     </aside>
     <section className="portal-workspace">
       <header className="portal-topbar">
-        {!admin ? <div className="plan-summary"><span><b>{lawyer?.credit_balance ?? "-"}</b> créditos disponibles</span><span>Renovación: <b>{renewal}</b></span></div> : <div className="plan-summary"><span><b>JurisConecta</b> gestión interna</span><span>Modo demostración</span></div>}
+        {!admin ? <div className="plan-summary"><span><b>{lawyer?.credit_balance ?? "-"}</b> créditos disponibles</span><span>Renovación: <b>{renewal}</b></span></div> : <div className="plan-summary"><span><b>JurisConecta</b> gestión interna</span><span>Acceso protegido con GitHub</span></div>}
         <div className="portal-user"><span className="topbar-notice">{admin ? "Administrador" : lawyer ? `Plan ${lawyer.plan_code}` : "Cuenta profesional"}</span>{!admin && lawyer?.avatar_data_url ? <img className="avatar" src={lawyer.avatar_data_url} alt="Foto de perfil" /> : <span className="avatar">{admin ? "AD" : initials}</span>}</div>
       </header>
       <main className="portal-main">{children}</main>

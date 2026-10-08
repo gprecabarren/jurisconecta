@@ -1,6 +1,6 @@
 # JurisConecta
 
-Portal chileno para conectar personas con abogados verificados. Sitio: [jurisconecta.cl](https://jurisconecta.cl). Repositorio: [gprecabarren/jurisconecta](https://github.com/gprecabarren/jurisconecta). Estado revisado el **2 de octubre de 2026**.
+Portal chileno para conectar personas con abogados verificados. Sitio: [jurisconecta.cl](https://jurisconecta.cl). Repositorio: [gprecabarren/jurisconecta](https://github.com/gprecabarren/jurisconecta). Estado revisado el **8 de octubre de 2026**. Es un **piloto**, no un producto aprobado para captar causas reales.
 
 ## Arquitectura y límites de costo
 
@@ -9,21 +9,24 @@ Portal chileno para conectar personas con abogados verificados. Sitio: [juriscon
 - La fuente Manrope se incluye en el build mediante `next/font`, no se pide al equipo del visitante. Las fotos profesionales se comprimen en el navegador (hasta 24 KB) y se almacenan en D1. Para un piloto pequeño esto evita habilitar nuevos servicios; si el volumen crece habrá que rediseñar el almacenamiento.
 - Existe un bucket R2 antiguo vinculado al Worker para antecedentes legados, pero **la subida de documentos sigue desactivada** (`LAWYER_APPLICATION_UPLOADS_ENABLED=false`). La verificación de identidad y título se coordina por video o presencialmente; el administrador debe registrar método y nota antes de aprobar. No se suben documentos nuevos a R2.
 - Créditos y planes son **de prueba**. No hay pasarela de pago, facturación, renovación cobrable, envío automático de emails/WhatsApp ni servicios de IA pagados. La cuenta de Cloudflare debe permanecer en Free y su consumo debe vigilarse; el código por sí solo no puede garantizar ausencia absoluta de cobros por otros productos de la cuenta.
+- Las imágenes editoriales nuevas se comprimen a **60 KB**, con límite total de **100 imágenes/5 MB** en D1 y hasta **200 noticias**. No se activó un servicio nuevo de almacenamiento ni facturación de Google Cloud. No activar pruebas, suscripciones o ampliaciones de cuota de Semrush.
 
 ## Funcionalidad implementada
 
 | Área | Estado |
 | --- | --- |
 | Portada y contenido | Inicio, catálogo legal, equipo, ayuda; header público persistente con **iniciar sesión** y **registrarse**. Facebook, Instagram, LinkedIn, WhatsApp y correo aparecen en ese orden en header/footer; sin enlaces oficiales son iconos desactivados. Manrope y estilo redondeado. En el home, textos y bloques entran alternadamente desde izquierda/derecha al desplazarse, también en móvil; se respeta movimiento reducido. |
-| Cuentas | Registro y login por correo para personas/abogados; admin por GitHub OAuth (login autorizado `gprecabarren`). Cambio de contraseña profesional, recuperación asistida con código de 30 minutos y verificación manual de identidad. |
+| Cuentas | Registro y login por correo y **Google** para personas/abogados; admin exclusivamente por GitHub OAuth (login autorizado `gprecabarren`). Google no concede privilegios administrativos ni aprueba abogados. Cambio de contraseña para cuentas que tienen contraseña; recuperación asistida con código de 30 minutos y verificación manual de identidad. |
 | Sesiones | Registro de navegador/dispositivo y ubicación aproximada, lista de sesiones activas y cierre selectivo. La ubicación puede ser inexacta por VPN. La sesión se vuelve inválida al deshabilitar/eliminar la cuenta o cambiar/restablecer la contraseña. Las cookies antiguas sin ID de sesión deberán volver a iniciar sesión después del despliegue de este cambio. |
 | Perfil profesional | Datos, especialidades, presentación y foto comprimida persistidos. Postulación sin archivos; aprobación solo tras revisión manual documentada. |
 | Casos | Clientes publican y cierran casos; abogados aprobados revisan pool/preferentes. Hasta tres propuestas por caso, comparación y aceptación/descartar desde la vista del cliente. **El contacto solo puede desbloquearlo el abogado aceptado** con créditos de prueba; una regla de D1 también lo impide sin aceptación. |
 | Seguimiento cliente | `/cliente` y `/cliente/caso?id=…`: estado, etapas, vistas, propuestas y evaluación luego del cierre. Son hitos de la plataforma, **no un expediente judicial sincronizado**. |
-| Soporte | FAQ primero, medios de contacto, tickets de usuarios autenticados, hilo y respuestas; bandeja administrativa y notificaciones internas. El correo se muestra solo cuando se configure una dirección oficial desde `/admin#redes`; no se sincroniza con tickets. |
+| Soporte | FAQ primero, medios de contacto, tickets de usuarios autenticados, hilo y respuestas; bandeja administrativa y notificaciones internas. Correo oficial configurado: **jurisconecta.site@gmail.com**, editable desde `/admin#redes`; no se sincroniza con tickets ni envía emails automáticos. |
 | Administración | Bandeja de tickets, postulaciones, costos en créditos, contenido, redes oficiales/correo, recuperación, directorio paginado de clientes/abogados con detalle y casos, habilitar/deshabilitar/eliminar cuentas mediante confirmación. Vista previa de registro cliente/abogado y pasos del caso usando los mismos formularios, sin crear datos y con avance libre más advertencias. Modo mantenimiento desde `/admin#configuracion`, apagado por defecto; deja accesibles `/admin` y OAuth GitHub, y registra el cambio en la bitácora con hora UTC y login. Las acciones anteriores a la bitácora no se pueden reconstruir. |
-| SEO técnico | Títulos y metadescripciones por ruta, URL canónica, etiquetas Open Graph/Twitter e imagen social propia, favicon SVG, `robots.txt` y `sitemap.xml`. Solo inicio, equipo y soporte están en el sitemap; formularios, paneles, mantenimiento y **textos legales todavía en borrador** llevan `noindex`. Títulos/H1/H2 del home se orientan a búsquedas de abogados en Chile y áreas de familia, civil, laboral y penal con redacción original. |
-| Control de cuenta | Clientes y abogados pueden deshabilitar o eliminar su propia cuenta desde su panel, con contraseña y confirmación; la eliminación borra datos asociados por cascada y deja un registro mínimo sin identificación personal. |
+| Noticias | `/noticias/` con buscador, paginación, guías relacionadas y RSS; **4 guías originales publicadas**. `/admin/noticias/` permite crear, editar, previsualizar, publicar o archivar, con imágenes, formato H2/H3/listas/enlaces, SEO y registro de cambios. HTML sanitizado en servidor, protección CSRF y control de versiones para no sobrescribir una edición concurrente. |
+| SEO técnico | Títulos y metadescripciones por ruta, canónicas, Open Graph/Twitter, imagen social propia, favicon, `robots.txt` y sitemap dinámico. El sitemap incluye **8 URLs**: inicio, equipo, soporte, noticias y 4 guías; se actualiza al publicar/archivar. Noticias con Article/BreadcrumbList, fechas reales y una H1. Búsquedas, previsualizaciones, formularios, paneles, mantenimiento y **textos legales en borrador** llevan `noindex`. |
+| Analítica | GTM publicado y GA4 conectado, **solo páginas públicas y solo después de aceptar analítica**. No se miden paneles, formularios ni contenido de casos. Preferencia revocable, anuncios desactivados, URLs sin consultas y eventos de intención limitados a valores predefinidos. |
+| Control de cuenta | Clientes y abogados pueden deshabilitar o eliminar su cuenta con confirmación. Cuentas con contraseña la requieren; cuentas creadas exclusivamente con Google necesitan reautenticación Google de menos de cinco minutos. La eliminación borra datos asociados por cascada y conserva un registro mínimo sin identificación personal. |
 | Evaluaciones | Cliente evalúa al abogado aceptado solo después de cerrar el caso; abogado ve sus evaluaciones reales. |
 | Textos legales | `/privacidad` y `/terminos` son **borradores**, no documentos aprobados para captar casos reales. |
 
@@ -36,6 +39,18 @@ Portal chileno para conectar personas con abogados verificados. Sitio: [juriscon
 GitHub OAuth usa `/auth/github/login` y `/auth/github/callback`.
 Todas las rutas administrativas comprueban la sesión GitHub autorizada; las privadas por rol comprueban la sesión de usuario.
 
+Rutas nuevas: `/auth/google/start`, `/auth/google/callback`, `/api/auth/providers`,
+`/api/auth/google/{account,registration}`, `/registro/google/`, `/api/admin/news`,
+`/api/admin/news/media`, `/api/measurement`, `/noticias/{slug}/`, `/noticias/media/{id}` y `/noticias/feed.xml`.
+
+### Registro y vinculación con Google
+
+- OAuth/OIDC con `openid email profile`, **PKCE S256, state y nonce aleatorios**, flujos de un solo uso que vencen a los diez minutos, validación RS256/JWKS, issuer/audience y correo verificado. Los secretos se guardan cifrados en Cloudflare; nunca en el navegador ni en Git.
+- Iniciar sesión **no crea una cuenta automáticamente**. Crear cuenta verifica primero Google y luego solicita datos y aceptación explícita de términos. El rol se conserva en el flujo del servidor: cliente activo, abogado pendiente con postulación en borrador.
+- Un correo ya registrado con contraseña no se vincula automáticamente: primero ingresar con contraseña y usar **Seguridad → Vincular mi cuenta Google** desde el panel, con el mismo correo. Esto evita apropiarse de una cuenta existente por coincidencia de email.
+- Límites de intentos OAuth con IP hasheada. Las cookies de sesión/flujo son `Secure`, `HttpOnly`, `SameSite=Lax`; las escrituras API exigen el origen del sitio. La protección antispam del registro/login por contraseña aún requiere trabajo adicional.
+- El ícono de Google es un archivo oficial autoalojado en `public/google-signin-icon.png`, obtenido del [paquete de recursos de Google](https://developers.google.com/identity/branding-guidelines). No necesita una solicitud a Google para dibujar el botón.
+
 ## Migraciones
 
 `migrations/0001` a `0006` son historia del proyecto. Las nuevas:
@@ -44,28 +59,58 @@ Todas las rutas administrativas comprueban la sesión GitHub autorizada; las pri
 - `0008_account_control_and_audit.sql`: sesiones de usuarios y administradores, bitácora y registro mínimo de eliminaciones.
 - `0009_site_social_links.sql`: redes oficiales configurables desde administración. No hay enlaces predeterminados ni se copian los de Chile3X.
 - `0010_site_settings.sql`: bandera de mantenimiento apagada y correo de contacto vacío por defecto.
+- `0011_news_google_measurement.sql`: noticias, imágenes acotadas en D1, identidades/flujos/registro temporal Google, límites de intentos, reautenticación y configuración de GTM/GA4.
+- `0012_editorial_guides.sql`: cuatro guías originales con metadatos y enlaces internos; inserción idempotente sin sobrescribir ediciones, IDs GTM/GA4 de este proyecto.
 
 Las migraciones `0007` y `0008` se aplicaron previamente solo a `jurisconecta-db`. La `0009` se aplicó el 2 de octubre. La `0010` se probó con todas las anteriores en D1 local aislado y se aplicó **solo** a esa base el 2 de octubre, tras comprobar el esquema y obtener el bookmark previo `0000001f-00000000-000050f9-0aae7327ccb2345085c9265d7390dae6`. Como las migraciones históricas se ejecutaron manualmente, `wrangler d1 migrations list --remote` aún las muestra pendientes: **no ejecutar `migrations apply --remote` en bloque**. La ventana gratuita de recuperación de D1 es limitada.
 
+El 8 de octubre se aplicaron **únicamente 0011 y 0012 a `jurisconecta-db`**, después de probar las doce migraciones en SQLite local aislado. Bookmark previo: `00000082-00000000-000050fe-821f93c8ac6f3146773222bd533bf905`; posterior: `00000084-00000011-000050fe-22bf17ceee655877b213a4ae6cc11813`. No se modificó una base de Chile3X. Consultar la disponibilidad actual de Time Travel antes de intentar una restauración.
+
 Si el administrador activa mantenimiento por error, debe entrar por `/admin` y desactivarlo en Configuración. Como recuperación excepcional, tras confirmar base y cuenta de Cloudflare correctas, se puede ejecutar `wrangler d1 execute jurisconecta-db --remote --command "UPDATE site_settings SET maintenance_enabled = 0 WHERE id = 1"`. Esta acción directa no pasa por la bitácora de la interfaz; documentar quién la hizo y cuándo. No activar mantenimiento para probar sobre usuarios reales: usar la D1 local aislada.
 
-## SEO y medición pendientes
+## Google, SEO y medición: estado real
 
 - Las búsquedas objetivo iniciales son «abogados en Chile», «encontrar abogado», «abogado de familia», «abogado laboral», «abogado civil» y «abogado penal». El contenido y metadatos son originales; NexoAbogados es referencia de intención y flujo, no una fuente de textos para copiar.
-- Cuando se creen Google Search Console, Analytics y Semrush: verificar el dominio, enviar `https://jurisconecta.cl/sitemap.xml`, revisar cobertura e indexación/canonicals, configurar Analytics solo con el ID y consentimiento aplicables, y usar Semrush para brechas de contenido. No hay rastreadores ni etiquetas de verificación inventadas en el código.
+- Todos los servicios Google de este proyecto se configuraron con **jurisconecta.site@gmail.com**. No se usó `genaropiedrar@gmail.com` para configurarlos. Proyecto Google Cloud: `jurisconecta`, OAuth externo en producción, callback exacto `https://jurisconecta.cl/auth/google/callback` y permisos de identidad básicos, sin facturación activada.
+- **Tag Manager:** cuenta `6381250735`, contenedor `266450240`, **GTM-PR9DGQR2**, versión publicada **2**. Importación reproducible en `config/gtm-jurisconecta.json`: 3 etiquetas, 2 activadores y 4 variables. El permiso de archivos de la extensión Chrome ya permitió la importación. No hay Custom HTML ni píxeles publicitarios.
+- **Analytics:** cuenta `411215437`, propiedad `557990437`, flujo web `16064883182`, **G-JT82FBN1S8**. Zona Santiago y moneda CLP; medición mejorada desactivada, retención de eventos/usuarios de 2 meses sin reinicio por actividad, Google Signals y datos aportados por usuario desactivados, detalle de ubicación/dispositivo desactivado y personalización publicitaria no permitida en ninguna región. Search Console está vinculado al flujo. Dimensión de evento **Acción pública**, parámetro `action`.
+- Eventos manuales: `page_view` y `public_action` (`register_start`, `login_open`, `contact_click`). Son **visitas e intenciones**, no registros completados ni conversiones jurídicas. No enviar correos, nombres, teléfonos, RUT, IDs de casos, búsquedas, consultas URL ni textos de formularios a la capa de datos. No habilitar medición mejorada para suplir esta restricción.
+- **Consentimiento básico:** no se descarga GTM/GA antes de aceptar, ni al rechazar. El usuario puede revocar desde «Preferencias de privacidad». No hay iframe `noscript`: ejecutarlo sin JavaScript eludiría el consentimiento. La preferencia vence a los 180 días. Solo se instrumentan inicio, equipo, soporte y noticias; un cambio a rutas privadas provoca navegación completa para descargar las etiquetas.
+- **Search Console:** propiedad de dominio verificada, sitemap enviado y reenviado el 8 de octubre. La inspección en vivo del sitemap confirma acceso correcto y rastreo permitido. Se solicitó y Google aceptó la **indexación del inicio**. El reporte del sitemap inicialmente indicó «No se ha podido obtener»: el envío aceptado no equivale a procesamiento/indexación completados. Requiere revisar el siguiente resultado de Google, sin asumir que ya está resuelto. Seguridad y acciones manuales no muestran problemas en esta revisión; esto **no sustituye una auditoría de seguridad del código**.
+- **Semrush sigue pendiente:** el panel del proyecto `31520982` abre, pero sus controles no responden a la automatización de Chrome de forma fiable. No fue posible verificar la cuenta propietaria ni completar auditoría o seguimiento. No se configuró con otro correo, no se aceptó una prueba pagada y no se declara como terminado. Próximo paso: recuperar interacción, verificar **jurisconecta.site@gmail.com** y configurar solo funciones gratuitas disponibles, sin contratar ni activar pruebas.
 - Las páginas de áreas legales aún no tienen contenido editorial propio. Para competir orgánicamente harán falta páginas útiles por materia, revisión jurídica, perfiles públicos verificables, enlaces internos y medición real; etiquetas por sí solas no aseguran posicionamiento.
+
+### Noticias publicadas y operación del editor
+
+1. [Cómo encontrar un abogado en Chile](https://jurisconecta.cl/noticias/como-encontrar-abogado-chile/).
+2. [Cómo preparar la primera consulta](https://jurisconecta.cl/noticias/preparar-primera-consulta-abogado/).
+3. [Cómo comparar propuestas y honorarios](https://jurisconecta.cl/noticias/comparar-propuestas-abogados-honorarios/).
+4. [Qué muestra el panel de cliente](https://jurisconecta.cl/noticias/seguimiento-caso-panel-cliente/).
+
+Entrar con GitHub a **[Administración → Noticias y SEO](https://jurisconecta.cl/admin/noticias/)**, seleccionar una noticia o crear otra, editar título/resumen/contenido, revisar el SEO, guardar como borrador y previsualizar. Para publicar, seleccionar «Publicada» y guardar; para retirar del público de manera recuperable, «Archivada». La previsualización es privada, no indexable y no medida. Las fechas son reales y los slugs existentes se conservan para evitar romper enlaces. El editor toma como referencia el flujo de formato, imagen, SEO y vista previa de Chile3X; no replica sus servicios de pago ni modifica su repositorio.
+
+Cada guardado registra usuario GitHub, fecha UTC, estado y versión en la bitácora. Si otro administrador cambió la versión, se rechaza el guardado: recargar y revisar, no forzar la sobrescritura. Las guías son informativas sobre elección/preparación y funcionalidades del piloto; necesitan revisión editorial/jurídica antes de una campaña comercial y no garantizan posiciones SEO.
 
 ## Desarrollo, compilación y despliegue
 
 ```bash
 pnpm install
+pnpm test
 pnpm check
 pnpm exec wrangler types worker-configuration.d.ts --env-interface CloudflareEnv --check
 pnpm exec wrangler deploy --dry-run
 pnpm exec wrangler deploy
 ```
 
-El despliegue solo debe utilizar `wrangler.jsonc` de este directorio y el Worker `jurisconecta`. No incluir secretos en Git. Se requieren `USER_AUTH_SECRET`, `AUTH_SESSION_SECRET` y `GITHUB_CLIENT_SECRET` en Cloudflare. OAuth GitHub usa el callback exacto `https://jurisconecta.cl/auth/github/callback`.
+El despliegue solo debe utilizar `wrangler.jsonc` de este directorio y el Worker `jurisconecta`. No incluir secretos en Git. Se requieren `USER_AUTH_SECRET`, `AUTH_SESSION_SECRET`, `GITHUB_CLIENT_SECRET` y `GOOGLE_CLIENT_SECRET` en Cloudflare. El ID público de cliente Google está en Wrangler. OAuth GitHub usa el callback exacto `https://jurisconecta.cl/auth/github/callback`. No volver a introducir secretos en un terminal interactivo que haya quedado esperando entrada.
+
+`pnpm test` requiere Node **22.13 o posterior** con `node:sqlite` (verificado con Node 24.18). Usa SQLite en memoria y datos ficticios, nunca la D1 de producción. Al 8 de octubre pasan **11 pruebas**, además de TypeScript, ESLint, build estático y verificación de tipos Wrangler. Las pruebas incluyen sanitización editorial, canónicas, autorización/CSRF, versionado/bitácora atómicos, medios, registro temporal Google, roles, términos, caducidad y consentimiento/navegación de analítica. No representan una prueba completa de todos los módulos históricos.
+
+Se comprobó en producción el intercambio OAuth real hasta el formulario pendiente de cliente y abogado, **sin crear cuentas reales ni aceptar los términos de JurisConecta durante el ensayo**. El login de una identidad aún no registrada devuelve el aviso de registro, como corresponde. Se verificaron respuestas públicas, feed/sitemap, 404 de noticias inexistentes y 401 de APIs administrativas sin sesión. La captura de red confirmó un `page_view` GA4 público después de aceptar, y ninguna carga de etiquetas antes de consentir/al rechazar ni en páginas privadas. Las evidencias visuales están en `docs/proofs/`.
+
+El panel **GA4 en tiempo real** confirmó `page_view` y `public_action`, con valores `register_start` y `login_open`. Se configuró el informe panorámico de comportamiento. Las 8 URLs del sitemap respondieron 200 con una H1 y una metadescripción por página. A 390 px, noticias usa una columna y no presenta desbordamiento horizontal; al revocar consentimiento, el documento vuelve a cargar sin scripts de Google. Se verificó también un guardado real de una guía desde Chrome y su movimiento `news.update` en la bitácora, además del cambio de correo `content.publish`.
+
+Última versión Cloudflare desplegada el 8 de octubre: **`623884f8-0d4c-46f9-acca-cc3cbc402593`**, Worker `jurisconecta`, únicamente `jurisconecta.cl` y `www.jurisconecta.cl`. Mantenimiento desactivado y subida documental R2 desactivada. Detalle de comprobaciones y pendientes en [el informe de verificación](docs/VERIFICACION-2026-10-08.md).
 
 ## Ruta de testeo con datos ficticios
 
@@ -78,19 +123,22 @@ El despliegue solo debe utilizar `wrangler.jsonc` de este directorio y el Worker
 7. Verificar permisos cruzados: cliente no ve `/admin` ni APIs de abogado; abogado no ve casos privados ajenos; usuario sin sesión recibe 401; probar teclado, lector de pantalla, errores y diseño móvil.
 8. Desde `/admin#redes`, agregar una URL oficial de prueba propia, verificarla en header/footer de inicio, equipo y soporte, y retirarla. Desde `/admin#vista-previa`, revisar ambos registros y los tres pasos del caso con campos vacíos; comprobar advertencias y que no se crean cuentas ni casos. Validar header fijo y animaciones en móvil/escritorio y con movimiento reducido.
 9. Revisar metadatos de inicio/equipo/soporte, imagen social y favicon al compartir enlaces; verificar `robots.txt`, `sitemap.xml`, canonicals, una H1 por página y `noindex` en paneles. En D1 local activar/desactivar mantenimiento: páginas y API públicas deben responder 503, `/admin` debe redirigir a GitHub, y la API admin debe exigir sesión. No activar esta bandera en producción durante pruebas.
+10. Completar Google en entorno de prueba para cliente y abogado: correo verificado, términos obligatorios, abogado pendiente, login posterior y vinculación desde una cuenta con contraseña. Manipular el rol del cuerpo no debe elevar permisos; state/nonce incorrectos y registros temporales vencidos se rechazan. Probar deshabilitar/eliminar una cuenta Google ficticia antes y después de la reautenticación de cinco minutos.
+11. En noticias: guardar borrador, previsualizar, publicar, archivar y comprobar bitácora/sitemap/RSS. Probar formato, portada/alt, imagen demasiado grande, URL peligrosa, sanitización de scripts y conflicto de dos editores. No crear noticias ficticias públicas para esta prueba: usar la base local.
+12. En Chrome limpio: sin consentimiento y al rechazar, cero solicitudes a GTM/GA; al aceptar, solo URL pública sin consultas y `G-JT82FBN1S8`. Revisar intención de registro/login/contacto, navegar a un panel y confirmar que no se miden sus páginas. Revocar, comprobar cookies y repetir con almacenamiento bloqueado. Revisión móvil de 390 px, teclado y contraste del consentimiento/editor/noticias.
 
 ## Qué falta antes de invitar usuarios reales
 
-Prioridad alta: revisión jurídica de términos/privacidad y política de retención; pruebas integrales de permisos y eliminación; rate limiting/antibots de login y registro; revisión de seguridad independiente; procedimiento operativo de verificación manual y respuesta a tickets; ensayo de backup/restauración D1; observación de cuota Free. El sistema de avisos es solo interno y la recuperación requiere intervención humana.
+Prioridad alta: revisión jurídica de términos/privacidad, consentimiento y retención; pruebas integrales de permisos y eliminación; rate limiting/antibots de login y registro **por contraseña**; revisión de seguridad independiente; procedimiento operativo de verificación manual y respuesta a tickets; ensayo de backup/restauración D1; observación de cuota Free. Hay perfiles/casos demostrativos preexistentes en producción: revisar y retirar de manera autorizada antes de abrir al público, sin borrar cuentas que pertenezcan a usuarios reales. El sistema de avisos es solo interno y la recuperación requiere intervención humana.
 
 Para acercarse a [NexoAbogados](https://www.nexoabogados.cl/) aún faltan mejor asignación de casos por especialidad/zona, moderación de casos, comunicación bidireccional dentro del caso, gestión de honorarios y contratos, y eventualmente notificaciones transaccionales. El diferencial propio de JurisConecta —cuenta del cliente y seguimiento— existe en forma de **estado de plataforma**, pero faltan hitos de la causa ingresados por el abogado, adjuntos seguros y estadísticas jurídicas reales. Ningún avance judicial se sincroniza automáticamente.
 
-### Cronograma cauteloso de tres semanas (2–23 de octubre)
+### Cronograma cauteloso de tres semanas (8–29 de octubre)
 
 | Semana | Trabajo | Condición para seguir |
 | --- | --- | --- |
-| 2–8 oct | Pruebas end-to-end con cuentas ficticias, roles, tickets, sesiones, auditoría, eliminación y aceptación de propuestas; corregir incidencias. | Sin contactos expuestos antes de aceptación ni datos de prueba residuales. |
-| 9–15 oct | Revisión legal, privacidad y retención; diseño de hitos reales de causa, moderación y protección antispam dentro de Free; accesibilidad/móvil. | Textos aprobados y recorrido completo entendible para cliente y abogado. |
-| 16–23 oct | Implementar hitos de causa, ensayar recuperación D1, medir rendimiento y cuota, piloto cerrado y revisión final. | Sin bloqueos críticos, costos vigilados y autorización expresa antes de captar usuarios reales. |
+| 8–14 oct | Pruebas end-to-end de Google/correo, roles, propuestas, tickets, sesiones y eliminación; resolver Semrush gratis y revisar respuesta de sitemap; antispam y revisión de datos demo. | Sin contactos expuestos antes de aceptación, escalada de roles ni datos ficticios visibles como reales. |
+| 15–21 oct | Revisión legal/editorial, privacidad y retención; moderación, hitos de causa ingresados por abogado y comunicación dentro del caso; páginas originales por especialidad. | Textos aprobados, acceso por caso validado y recorrido comprensible, accesible y móvil. |
+| 22–29 oct | Terminar hitos/comunicación, ensayar restauración D1, medir rendimiento/consumo, revisar indexación y realizar piloto cerrado con incidencias priorizadas. | Sin bloqueos críticos, costos vigilados y aprobación expresa antes de captar usuarios reales. |
 
 Estimación: **unas 3 semanas para un piloto controlado**, condicionadas a revisión legal y pruebas; un producto comercial con pagos y notificaciones externas requiere trabajo y decisiones adicionales. No se activarán componentes facturables por esta hoja de ruta.

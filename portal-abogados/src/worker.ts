@@ -43,8 +43,12 @@ import { onRequestGet as githubCallback } from "../functions/auth/github/callbac
 import { onRequestGet as githubLogin } from "../functions/auth/github/login";
 import type { AuthEnv } from "../functions/_lib/github-auth";
 import type { UserAuthEnv } from "../functions/_lib/user-auth";
+import { googleAvailable, googleCallback, googleRegistration, googleAccountStatus, startGoogle, type GoogleEnv } from "../functions/_lib/google-auth";
+import { serveNews, editorialFeed } from "../functions/_lib/news-public";
+import { handleAdminNews } from "../functions/api/admin/news";
+import { uploadNewsMedia } from "../functions/api/admin/news-media";
 
-type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv;
+type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv & GoogleEnv;
 type PageMiddleware = (context: { request: Request; env: AppEnv; next: () => Promise<Response> }) => Promise<Response>;
 
 const apiNotFound = () => Response.json({ error: "Ruta no encontrada." }, { status: 404 });
@@ -62,6 +66,17 @@ function routePrefix(pathname: string, prefix: string) {
 
 async function dispatchApi(request: Request, env: AppEnv, pathname: string): Promise<Response> {
   const method = request.method.toUpperCase();
+
+  if (pathname === "/api/auth/providers") return method === "GET" ? Response.json({ google: googleAvailable(env) }, { headers: { "Cache-Control": "no-store" } }) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/auth/google/registration") return method === "GET" || method === "POST" ? googleRegistration(request, env) : methodNotAllowed(["GET", "POST"]);
+  if (pathname === "/api/auth/google/account") return method === "GET" ? googleAccountStatus(request, env) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/admin/news") return ["GET", "POST", "PUT"].includes(method) ? handleAdminNews({ request, env }) : methodNotAllowed(["GET", "POST", "PUT"]);
+  if (pathname === "/api/admin/news/media") return method === "POST" ? uploadNewsMedia(request, env) : methodNotAllowed(["POST"]);
+  if (pathname === "/api/measurement") {
+    if (method !== "GET") return methodNotAllowed(["GET"]);
+    const settings = await env.DB.prepare("SELECT gtm_id FROM site_settings WHERE id = 1").first<{ gtm_id: string }>();
+    return Response.json({ gtmId: settings?.gtm_id || "" }, { headers: { "Cache-Control": "no-store" } });
+  }
 
   if (pathname === "/api/health") {
     if (method !== "GET" && method !== "HEAD") return methodNotAllowed(["GET", "HEAD"]);
@@ -234,12 +249,26 @@ export default {
           return new Response(request.method === "HEAD" ? null : page.body, { status: 503, headers: { ...headers, "Content-Type": "text/html; charset=utf-8" } });
         }
       }
-      if (routePrefix(url.pathname, "/api")) return await dispatchApi(request, env, url.pathname);
+      if (routePrefix(url.pathname, "/api")) {
+        if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && request.headers.get("Origin") !== url.origin) return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+        const response = await dispatchApi(request, env, url.pathname);
+        response.headers.set("Cache-Control", "no-store");
+        response.headers.set("X-Content-Type-Options", "nosniff");
+        return response;
+      }
       if (url.pathname === "/auth/github/login") return request.method === "GET" ? githubLogin({ request, env }) : methodNotAllowed(["GET"]);
       if (url.pathname === "/auth/github/callback") return request.method === "GET" ? githubCallback({ request, env }) : methodNotAllowed(["GET"]);
+      if (url.pathname === "/auth/google/start") return request.method === "GET" ? startGoogle(request, env) : methodNotAllowed(["GET"]);
+      if (url.pathname === "/auth/google/callback") return request.method === "GET" ? googleCallback(request, env) : methodNotAllowed(["GET"]);
+      if (url.pathname === "/sitemap.xml" || url.pathname === "/noticias/feed.xml") return editorialFeed(request, env);
+      if (routePrefix(url.pathname, "/noticias")) return serveNews(request, env);
 
       const protectedResponse = await serveProtectedPage(request, env, url.pathname.replace(/\/$/, "") || "/");
-      return protectedResponse ?? env.ASSETS.fetch(request);
+      const response = protectedResponse ?? await env.ASSETS.fetch(request);
+      if (["/", "/equipo/", "/soporte/"].includes(url.pathname) && response.headers.get("Content-Type")?.includes("text/html")) {
+        return new HTMLRewriter().on("head", { element(element) { element.append('<script src="/measurement.js" defer></script>', { html: true }); } }).transform(response);
+      }
+      return response;
     } catch (error) {
       console.error(JSON.stringify({
         message: "Unhandled request error",

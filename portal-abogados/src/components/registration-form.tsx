@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowRight, BriefcaseBusiness, CircleUserRound, Scale } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { chileRegions } from "../../shared/chile";
+import { GoogleAccess } from "./google-access";
 
 type Role = "person" | "lawyer";
 
@@ -48,6 +49,7 @@ export function RegistrationForm({ preview = false, previewRole, onPreviewContin
       <p className="eyebrow">Crear una cuenta</p><h1>Comienza de la forma que te sirva.</h1>
       <p className="auth-intro">Las cuentas profesionales quedan pendientes de revisión antes de recibir oportunidades.</p>
       <div className="role-picker"><button className={role === "person" ? "role-option selected" : "role-option"} onClick={() => setRole("person")} type="button"><CircleUserRound size={22} /><span><strong>Busco un abogado</strong><small>Publicaré y revisaré mis casos</small></span></button><button className={role === "lawyer" ? "role-option selected" : "role-option"} onClick={() => setRole("lawyer")} type="button"><BriefcaseBusiness size={22} /><span><strong>Soy abogado/a</strong><small>Crearé mi perfil profesional</small></span></button></div>
+      <GoogleAccess intent="register" role={role} preview={preview} />
       <form className="auth-form" onSubmit={register} noValidate={preview}>
         <label>Nombre completo<input required name="fullName" autoComplete="name" placeholder="Tu nombre y apellido" /></label>
         <label>Correo electrónico<input required type="email" name="email" autoComplete="email" placeholder="nombre@correo.cl" /></label>

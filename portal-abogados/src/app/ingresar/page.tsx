@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Scale } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { GoogleAccess } from "../../components/google-access";
 
 export default function IngresarPage() {
   const [message, setMessage] = useState("");
@@ -24,5 +25,5 @@ export default function IngresarPage() {
     }
   }
 
-  return <main className="auth-page"><Link className="auth-brand" href="/"><span><Scale size={20} /></span>JurisConecta</Link><section className="auth-card compact"><p className="eyebrow">Bienvenido de vuelta</p><h1>Ingresa a tu cuenta.</h1><p className="auth-intro">Tu panel se adapta a tu cuenta: persona o profesional. Puedes seguir tus casos y propuestas.</p><form className="auth-form" onSubmit={login}><label>Correo electrónico<input required type="email" name="email" autoComplete="email" placeholder="nombre@correo.cl" /></label><label>Contraseña<input required type="password" name="password" autoComplete="current-password" placeholder="Tu contraseña" /></label><button className="primary-button" disabled={loading}>{loading ? "Ingresando..." : "Ingresar"}<ArrowRight size={18} /></button></form>{message && <p className="form-message">{message}</p>}<p className="auth-switch"><Link href="/recuperar-clave">¿Olvidaste tu contraseña?</Link></p><p className="auth-switch">¿Aún no tienes cuenta? <Link href="/registro">Crea una aquí</Link></p></section></main>;
+  return <main className="auth-page"><Link className="auth-brand" href="/"><span><Scale size={20} /></span>JurisConecta</Link><section className="auth-card compact"><p className="eyebrow">Bienvenido de vuelta</p><h1>Ingresa a tu cuenta.</h1><p className="auth-intro">Tu panel se adapta a tu cuenta: persona o profesional. Puedes seguir tus casos y propuestas.</p><GoogleAccess /><form className="auth-form" onSubmit={login}><label>Correo electrónico<input required type="email" name="email" autoComplete="email" placeholder="nombre@correo.cl" /></label><label>Contraseña<input required type="password" name="password" autoComplete="current-password" placeholder="Tu contraseña" /></label><button className="primary-button" disabled={loading}>{loading ? "Ingresando..." : "Ingresar"}<ArrowRight size={18} /></button></form>{message && <p className="form-message">{message}</p>}<p className="auth-switch"><Link href="/recuperar-clave">¿Olvidaste tu contraseña?</Link></p><p className="auth-switch">¿Aún no tienes cuenta? <Link href="/registro">Crea una aquí</Link></p></section></main>;
 }
