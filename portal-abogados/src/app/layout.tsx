@@ -23,5 +23,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="es-CL" className={manrope.variable}><body><PublicSiteFrame>{children}</PublicSiteFrame><ScrollReveal /></body></html>;
+  return <html lang="es-CL" className={manrope.variable}><body><PublicSiteFrame>{children}</PublicSiteFrame><ScrollReveal /><script src="/navigation.js" defer /></body></html>;
 }

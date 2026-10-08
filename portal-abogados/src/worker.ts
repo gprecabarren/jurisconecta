@@ -47,6 +47,7 @@ import { googleAvailable, googleCallback, googleRegistration, googleAccountStatu
 import { serveNews, editorialFeed } from "../functions/_lib/news-public";
 import { handleAdminNews } from "../functions/api/admin/news";
 import { uploadNewsMedia } from "../functions/api/admin/news-media";
+import { handleAdminInvitation, handleAdminMe, handleAdminMembers } from "../functions/_lib/admin-members";
 
 type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv & GoogleEnv;
 type PageMiddleware = (context: { request: Request; env: AppEnv; next: () => Promise<Response> }) => Promise<Response>;
@@ -66,6 +67,9 @@ function routePrefix(pathname: string, prefix: string) {
 
 async function dispatchApi(request: Request, env: AppEnv, pathname: string): Promise<Response> {
   const method = request.method.toUpperCase();
+  if (pathname === "/api/admin/me") return handleAdminMe(request, env);
+  if (pathname === "/api/admin/administrators") return handleAdminMembers(request, env);
+  if (pathname === "/api/invitaciones-admin") return ["GET", "POST"].includes(method) ? handleAdminInvitation(request, env) : methodNotAllowed(["GET", "POST"]);
 
   if (pathname === "/api/auth/providers") return method === "GET" ? Response.json({ google: googleAvailable(env) }, { headers: { "Cache-Control": "no-store" } }) : methodNotAllowed(["GET"]);
   if (pathname === "/api/auth/google/registration") return method === "GET" || method === "POST" ? googleRegistration(request, env) : methodNotAllowed(["GET", "POST"]);
@@ -238,7 +242,7 @@ export default {
     }
 
     try {
-      const maintenanceExempt = routePrefix(url.pathname, "/admin") || routePrefix(url.pathname, "/api/admin") || routePrefix(url.pathname, "/auth/github") || routePrefix(url.pathname, "/_next") || routePrefix(url.pathname, "/mantenimiento") || url.pathname === "/api/health" || url.pathname === "/icon.svg" || url.pathname === "/og-jurisconecta.png";
+      const maintenanceExempt = url.pathname === "/invitacion-admin/" || url.pathname === "/api/invitaciones-admin" || routePrefix(url.pathname, "/admin") || routePrefix(url.pathname, "/api/admin") || routePrefix(url.pathname, "/auth/github") || routePrefix(url.pathname, "/_next") || routePrefix(url.pathname, "/mantenimiento") || url.pathname === "/api/health" || url.pathname === "/icon.svg" || url.pathname === "/og-jurisconecta.png";
       if (!maintenanceExempt) {
         const settings = await env.DB.prepare("SELECT maintenance_enabled FROM site_settings WHERE id = 1").first<{ maintenance_enabled: number }>();
         if (settings?.maintenance_enabled === 1) {

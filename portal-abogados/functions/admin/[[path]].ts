@@ -1,10 +1,15 @@
-import { adminGitHubLogin, authSettings, readSession, type AuthEnv } from "../_lib/github-auth";
+import { readSession, type AuthEnv } from "../_lib/github-auth";
 
 interface Context { request: Request; env: AuthEnv; next: () => Promise<Response>; }
 
 export const onRequest = async ({ request, env, next }: Context) => {
   const session = await readSession(request, env);
-  const { allowedLogin = adminGitHubLogin } = authSettings(env);
-  if (session && session.login.toLowerCase() === allowedLogin.toLowerCase()) return next();
+  if (session) {
+    const assetResponse = await next();
+    const response = new Response(assetResponse.body, assetResponse);
+    response.headers.set("Cache-Control", "no-store");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return response;
+  }
   return Response.redirect(new URL("/auth/github/login", request.url), 302);
 };

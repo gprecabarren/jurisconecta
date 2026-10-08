@@ -1,4 +1,4 @@
-import { adminGitHubLogin, authSettings, readSession, type AuthEnv } from "../../_lib/github-auth";
+import { readSession, type AuthEnv } from "../../_lib/github-auth";
 import { adminAuditStatement } from "../../_lib/admin-audit";
 import type { D1Database } from "../../_lib/user-auth";
 import { readJsonBody } from "../../_lib/http";
@@ -7,8 +7,7 @@ interface Context { request: Request; env: AuthEnv & { DB?: D1Database }; }
 
 async function authorized(request: Request, env: Context["env"]) {
   const session = await readSession(request, env);
-  const { allowedLogin = adminGitHubLogin } = authSettings(env);
-  return Boolean(session && session.login.toLowerCase() === allowedLogin.toLowerCase());
+  return Boolean(session);
 }
 
 export const onRequestGet = async ({ request, env }: Context) => {

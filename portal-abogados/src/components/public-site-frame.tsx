@@ -5,7 +5,7 @@ import { ReactNode, useEffect, useState } from "react";
 import type { SocialLink } from "../../shared/social-links";
 import { PublicFooter, PublicHeader } from "./public-chrome";
 
-const privateRoute = /^\/(?:admin|account|casos|dashboard|evaluaciones|planes|postulacion-abogado|cliente|publicar-caso|mantenimiento)(?:\/|$)/;
+const privateRoute = /^\/(?:admin|account|casos|dashboard|evaluaciones|planes|postulacion-abogado|cliente|publicar-caso|mantenimiento|invitacion-admin)(?:\/|$)/;
 
 export function PublicSiteFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();

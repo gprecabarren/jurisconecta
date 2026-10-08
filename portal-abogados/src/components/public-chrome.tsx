@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Camera, Mail, MessageCircle, Music2, Play, Scale, Send } from "lucide-react";
+import { ArrowRight, Camera, Mail, Menu, MessageCircle, Music2, Play, Scale, Send, UserRound, X } from "lucide-react";
 import type { SocialLink, SocialPlatform } from "../../shared/social-links";
 import { socialPlatformLabels } from "../../shared/social-links";
 
@@ -36,6 +36,14 @@ export function PublicHeader({ socialLinks = [], contactEmail = "", home = false
     <Link className="brand" href="/" aria-label="JurisConecta inicio"><span className="brand-mark"><Scale size={22} strokeWidth={2.6} /></span><span>Juris<span>Conecta</span></span></Link>
     <nav className="public-main-nav" aria-label="Navegación principal"><a href={anchor("como-funciona")}>Cómo funciona</a><a href={anchor("casos")}>Casos</a><a href={anchor("confianza")}>Por qué elegirnos</a><a href="/noticias/">Noticias</a><Link href="/soporte">Soporte</Link></nav>
     <div className="public-header-right"><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="header" /><div className="header-actions"><Link className="client-login-link" href="/ingresar">Iniciar sesión</Link><Link className="lawyer-link" href="/registro">Registrarse <ArrowRight size={15} aria-hidden="true" /></Link></div></div>
+    <Link className="mobile-login-shortcut" href="/ingresar" aria-label="Iniciar sesión" title="Iniciar sesión"><UserRound size={21} aria-hidden="true" /></Link>
+    <details className="public-mobile-menu" data-navigation-menu>
+      <summary aria-label="Abrir o cerrar menú de navegación"><Menu className="menu-open-icon" size={22} aria-hidden="true" /><X className="menu-close-icon" size={22} aria-hidden="true" /><span>Menú</span></summary>
+      <div className="public-mobile-panel">
+        <nav aria-label="Navegación móvil"><a href={anchor("como-funciona")}>Cómo funciona</a><a href={anchor("casos")}>Casos</a><a href={anchor("confianza")}>Por qué elegirnos</a><a href="/noticias/">Noticias y guías</a><Link href="/soporte">Soporte y tickets</Link><Link href="/equipo">Nuestro equipo</Link><Link href="/ingresar">Iniciar sesión</Link><Link href="/registro">Crear cuenta de cliente</Link><Link href="/registro?tipo=abogado">Registrarse como abogado/a</Link></nav>
+        <SocialLinks links={socialLinks} contactEmail={contactEmail} placement="header" />
+      </div>
+    </details>
   </header>;
 }
 

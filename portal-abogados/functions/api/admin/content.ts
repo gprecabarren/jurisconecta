@@ -1,4 +1,4 @@
-import { adminGitHubLogin, authSettings, readSession, type AuthEnv } from "../../_lib/github-auth";
+import { readSession, type AuthEnv } from "../../_lib/github-auth";
 import type { HelpArticle, TeamMember } from "../../_lib/content";
 import type { D1Database } from "../../_lib/user-auth";
 import { adminAuditStatement } from "../../_lib/admin-audit";
@@ -9,8 +9,7 @@ type ContentPayload = { team: TeamMember[]; help: HelpArticle[]; socialLinks: So
 
 async function authenticated(request: Request, env: Context["env"]) {
   const session = await readSession(request, env);
-  const { allowedLogin = adminGitHubLogin } = authSettings(env);
-  return Boolean(session && session.login.toLowerCase() === allowedLogin.toLowerCase());
+  return Boolean(session);
 }
 
 function validTeam(value: unknown): value is TeamMember[] {
