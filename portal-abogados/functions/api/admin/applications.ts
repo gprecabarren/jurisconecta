@@ -3,6 +3,7 @@ import { readSession, type AuthEnv } from "../../_lib/github-auth";
 import type { D1Database } from "../../_lib/user-auth";
 import { readJsonBody } from "../../_lib/http";
 import { adminAuditStatement } from "../../_lib/admin-audit";
+import { checkWalletLimit, clearBillingGuard, nextRenewalDate, readBillingConfig, readBillingPlans, readBillingProfile, walletStatements } from "../../_lib/billing";
 
 interface Context { request: Request; env: AuthEnv & { DB?: D1Database }; }
 type Application = { id: string; full_name: string; email: string; status: string; region: string | null; specialties: string; application_status: string; application_submitted_at: string | null; application_review_note: string | null; university: string | null; rut: string | null; selected_plan_code: string; document_count: number; verification_method: string | null; verified_at: string | null; };
@@ -29,16 +30,24 @@ export const onRequestPatch = async ({ request, env }: Context) => {
     const method = payload?.verificationMethod === "video" || payload?.verificationMethod === "in_person" ? payload.verificationMethod : null;
     const evidenceNote = typeof payload?.evidenceNote === "string" ? payload.evidenceNote.trim().slice(0, 500) : "";
     if (!method || evidenceNote.length < 20 || payload?.verifiedOriginals !== true) return Response.json({ error: "Debes revisar los originales por video o presencialmente, registrar el método y confirmar la verificación." }, { status: 400 });
-    const profile = await env.DB.prepare("SELECT lp.plan_code, p.monthly_credits FROM lawyer_profiles lp JOIN subscription_plans p ON p.code = lp.plan_code WHERE lp.user_id = ? LIMIT 1").bind(userId).first<{ plan_code: string; monthly_credits: number }>();
-    if (!profile) return Response.json({ error: "No encontramos la postulación." }, { status: 404 });
+    const [profile, config, plans] = await Promise.all([readBillingProfile(env.DB, userId), readBillingConfig(env.DB), readBillingPlans(env.DB)]);
+    const plan = plans.find((item) => item.code === profile.plan_code);
+    if (!plan) return Response.json({ error: "El plan elegido ya no está habilitado. Solicita una nueva elección antes de aprobar." }, { status: 409 });
     const admin = await readSession(request, env);
     if (!admin) return Response.json({ error: "Sesión administrativa vencida." }, { status: 401 });
+    const planBalance = config.mode === "free" ? plan.monthly_credits : 0;
+    const reserveBalance = profile.reserve_credit_balance + profile.plan_credit_balance;
+    if (planBalance + reserveBalance > config.maxBalance) return Response.json({ error: "El saldo supera el límite configurado. Revisa los parámetros económicos." }, { status: 409 });
+    checkWalletLimit(config, planBalance, reserveBalance);
+    const guard = crypto.randomUUID();
     try { await env.DB.batch([
+      env.DB.prepare("INSERT INTO billing_transaction_guards (id, valid) SELECT ?, CASE WHEN EXISTS (SELECT 1 FROM lawyer_profiles WHERE user_id = ? AND billing_version = ? AND application_status = 'submitted') AND EXISTS (SELECT 1 FROM billing_config WHERE id = 1 AND version = ?) THEN 1 ELSE 0 END").bind(guard, userId, profile.billing_version, config.version),
       env.DB.prepare("INSERT INTO lawyer_verifications (lawyer_id, method, evidence_note, reviewed_by) VALUES (?, ?, ?, ?)").bind(userId, method, evidenceNote, `github:${admin.login}`),
       env.DB.prepare("UPDATE users SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(userId),
-      env.DB.prepare("UPDATE lawyer_profiles SET subscription_status = 'trial', credit_balance = ?, renewal_date = date('now', '+30 day'), application_status = 'approved', application_reviewed_at = CURRENT_TIMESTAMP, application_review_note = ? WHERE user_id = ?").bind(profile.monthly_credits, note || null, userId),
-      env.DB.prepare("INSERT INTO lawyer_credit_ledger (id, lawyer_id, delta, balance_after, reason) VALUES (?, ?, ?, ?, 'monthly_allocation')").bind(crypto.randomUUID(), userId, profile.monthly_credits, profile.monthly_credits),
+      env.DB.prepare("UPDATE lawyer_profiles SET application_status = 'approved', application_reviewed_at = CURRENT_TIMESTAMP, application_review_note = ? WHERE user_id = ? AND application_status = 'submitted'").bind(note || null, userId),
+      ...walletStatements(env.DB, userId, profile, { planCode: profile.plan_code, planBalance, reserveBalance, renewalDate: config.mode === "free" ? nextRenewalDate(config) : null, subscriptionStatus: config.mode === "free" ? "trial" : "past_due", periodMode: config.mode }, "activation", `approval:${profile.billing_version}`, config.mode === "free" ? "Asignación gratuita al aprobar el perfil; sin cobro." : "Perfil aprobado sin asignación de créditos pagados."),
       await adminAuditStatement(request, env, env.DB, "lawyer.approve", "user", userId, { method, plan: profile.plan_code }),
+      clearBillingGuard(env.DB, guard),
     ]); } catch { return Response.json({ error: "No se pudo aprobar; revisa si la verificación ya fue registrada." }, { status: 409 }); }
   } else {
     await env.DB.batch([

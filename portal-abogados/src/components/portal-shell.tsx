@@ -19,7 +19,7 @@ const lawyerItems = [
   { href: "/planes", label: "Plan y créditos", icon: WalletCards },
 ];
 
-type LawyerHeader = { full_name: string; plan_code: string; credit_balance: number; renewal_date: string | null; avatar_data_url: string | null };
+type LawyerHeader = { full_name: string; plan_code: string; credit_balance: number; plan_credit_balance: number; reserve_credit_balance: number; plan_monthly_credits: number; subscription_status: string; billing_mode: "free" | "paid"; renewal_date: string | null; avatar_data_url: string | null };
 
 export function PortalShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
   const pathname = usePathname();
@@ -36,7 +36,14 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     return () => { active = false; window.removeEventListener("hashchange", updateHash); };
   }, [admin]);
   useEffect(() => {
-    if (!admin) void fetch("/api/lawyer/profile").then(async (response) => response.ok ? await response.json() as { profile?: LawyerHeader } : null).then((result) => setLawyer(result?.profile || null)).catch(() => undefined);
+    if (admin) return;
+    let active = true;
+    const loadProfile = () => {
+      void fetch("/api/lawyer/profile").then(async (response) => response.ok ? await response.json() as { profile?: LawyerHeader } : null).then((result) => { if (active) setLawyer(result?.profile || null); }).catch(() => undefined);
+    };
+    loadProfile();
+    window.addEventListener("juris:billing-updated", loadProfile);
+    return () => { active = false; window.removeEventListener("juris:billing-updated", loadProfile); };
   }, [admin]);
   async function logout() {
     const response = await fetch(admin ? "/api/admin/me" : "/api/auth/logout", { method: admin ? "DELETE" : "POST" });
@@ -50,6 +57,8 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
         { href: "/admin#administradores", label: "Administradores GitHub", icon: ShieldCheck },
         { href: "/admin#postulaciones", label: "Postulaciones", icon: FileCheck2 },
         { href: "/admin#casos", label: "Casos y créditos", icon: WalletCards },
+        { href: "/admin#planes-creditos", label: "Planes y créditos", icon: WalletCards },
+        { href: "/admin#colaboraciones", label: "Empresas y estudios", icon: BriefcaseBusiness },
         { href: "/admin#equipo", label: "Equipo", icon: UsersRound },
         { href: "/admin#redes", label: "Redes sociales", icon: ContactRound },
         { href: "/admin#configuracion", label: "Configuración", icon: Settings2 },
@@ -64,7 +73,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
       ]
     : lawyerItems;
   const initials = (lawyer?.full_name || "PC").split(" ").map((item) => item[0]).join("").slice(0, 2);
-  const renewal = lawyer?.renewal_date ? new Intl.DateTimeFormat("es-CL").format(new Date(`${lawyer.renewal_date}T12:00:00`)) : "por definir";
+  const renewal = lawyer?.renewal_date ? new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago" }).format(new Date(lawyer.renewal_date.includes("T") ? lawyer.renewal_date : `${lawyer.renewal_date}T12:00:00Z`)) : "por definir";
 
   return <div className="portal-shell">
     <aside className="portal-sidebar" onKeyDown={(event) => { if (event.key === "Escape") { setMenuOpen(false); document.getElementById("portal-menu-toggle")?.focus(); } }}>
@@ -98,7 +107,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     </aside>
     <section className="portal-workspace">
       <header className="portal-topbar">
-        {!admin ? <div className="plan-summary"><span><b>{lawyer?.credit_balance ?? "-"}</b> créditos disponibles</span><span>Renovación: <b>{renewal}</b></span></div> : <div className="plan-summary"><span><b>JurisConecta</b> gestión interna</span><span>Acceso protegido con GitHub</span></div>}
+        {!admin ? <div className="plan-summary"><span>Plan: <b>{lawyer ? `${lawyer.plan_credit_balance}/${lawyer.plan_monthly_credits}` : "—"}</b></span><span>Reserva: <b>{lawyer?.reserve_credit_balance ?? "—"}</b></span><span>Total: <b>{lawyer?.credit_balance ?? "—"}</b></span><span>Renovación: <b>{renewal}</b></span>{lawyer && <span className="billing-mode-label">{lawyer.billing_mode === "free" ? "Modo gratuito" : "Pago preparado · sin pasarela"}</span>}</div> : <div className="plan-summary"><span><b>JurisConecta</b> gestión interna</span><span>Acceso protegido con GitHub</span></div>}
         <div className="portal-user"><span className="topbar-notice">{admin ? administrator ? `@${administrator.login}` : "Administrador" : lawyer ? `Plan ${lawyer.plan_code}` : "Cuenta profesional"}</span>{!admin && lawyer?.avatar_data_url ? <img className="avatar" src={lawyer.avatar_data_url} alt="Foto de perfil" /> : <span className="avatar">{admin ? "AD" : initials}</span>}</div>
       </header>
       <main className="portal-main">{children}</main>

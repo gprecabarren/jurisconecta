@@ -3,7 +3,6 @@ import { readJsonBody } from "../../_lib/http";
 import { professionalLegalAreas } from "../../../shared/legal-catalog";
 
 interface Context { request: Request; env: UserAuthEnv; }
-const plans = new Set(["silver", "gold", "premium"]);
 const modes = new Set(["remote", "hybrid", "in_person"]);
 
 function optionalUrl(value: unknown) {
@@ -24,9 +23,10 @@ export const onRequestPost = async ({ request, env }: Context) => {
   const bio = cleanText(body.bio, 3000);
   const specialties = Array.isArray(body.specialties) ? body.specialties.filter((item): item is string => typeof item === "string" && professionalLegalAreas.includes(item)).slice(0, 10) : [];
   const plan = cleanText(body.planCode, 20);
+  const availablePlan = await env.DB.prepare("SELECT code FROM subscription_plans WHERE code = ? AND active = 1").bind(plan).first<{ code: string }>();
   const mode = cleanText(body.attentionMode, 20);
   const years = Number(body.experienceYears ?? 0);
-  if (!validRut(rut) || university.length < 3 || !/^\d{4}-\d{2}-\d{2}$/.test(graduationDate) || Number.isNaN(Date.parse(graduationDate)) || graduationDate > new Date().toISOString().slice(0, 10) || bio.length < 30 || specialties.length === 0 || !plans.has(plan) || !modes.has(mode) || !Number.isInteger(years) || years < 0 || years > 70 || body.manualVerificationConsent !== true) return Response.json({ error: "Revisa RUT, título, fecha, especialidades, presentación y consentimiento para la revisión manual." }, { status: 400 });
+  if (!validRut(rut) || university.length < 3 || !/^\d{4}-\d{2}-\d{2}$/.test(graduationDate) || Number.isNaN(Date.parse(graduationDate)) || graduationDate > new Date().toISOString().slice(0, 10) || bio.length < 30 || specialties.length === 0 || !availablePlan || !modes.has(mode) || !Number.isInteger(years) || years < 0 || years > 70 || body.manualVerificationConsent !== true) return Response.json({ error: "Revisa RUT, título, fecha, especialidades, presentación y consentimiento para la revisión manual." }, { status: 400 });
   const links = [body.linkedinUrl, body.twitterUrl, body.youtubeUrl, body.facebookUrl, body.instagramUrl, body.websiteUrl];
   if (links.some((value) => cleanText(value, 300) && !optionalUrl(value))) return Response.json({ error: "Los enlaces profesionales deben comenzar con https:// o http://." }, { status: 400 });
   const profile = await env.DB.prepare("SELECT application_status FROM lawyer_profiles WHERE user_id = ? LIMIT 1").bind(session.id).first<{ application_status: string }>();

@@ -8,7 +8,6 @@ import {
   Check,
   ChevronRight,
   FileText,
-  Gavel,
   MapPin,
   MessageSquareText,
   Search,
@@ -16,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useState } from "react";
+import { PartnersCarousel } from "@/components/partners-carousel";
 
 const areas = [
   { title: "Familia", cases: ["Pensión de alimentos", "Divorcio", "Régimen de visitas", "Violencia intrafamiliar"] },
@@ -49,19 +49,9 @@ export default function Home() {
           </ul>
           <Link className="primary-button" href="/registro">Encontrar un abogado <ArrowRight size={18} /></Link>
         </div>
-        <div className="hero-panel" aria-label="Resumen de solicitud legal" data-reveal data-reveal-from="right">
-          <div className="panel-topline"><span className="status-dot" />Solicitud en pocos pasos</div>
-          <div className="panel-body">
-            <span className="panel-icon"><Gavel size={28} /></span>
-            <h2>Tu caso merece una buena primera conversación.</h2>
-            <p>Te ayudamos a partir con la especialidad correcta, sin comprometerte.</p>
-          </div>
-          <div className="panel-stats">
-            <span><strong>3 pasos</strong> para publicar</span>
-            <span><strong>Chile</strong> atención nacional</span>
-          </div>
-        </div>
       </section>
+
+      <PartnersCarousel />
 
       <section id="como-funciona" className="how-section section-shell">
         <div className="section-heading centered" data-reveal data-reveal-from="left">

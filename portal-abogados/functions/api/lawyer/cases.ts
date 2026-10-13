@@ -1,4 +1,6 @@
 import { D1Database, requireUser, UserAuthEnv } from "../../_lib/user-auth";
+import { BillingError, ensureCurrentBilling, readBillingConfig } from "../../_lib/billing";
+import { readJsonBody } from "../../_lib/http";
 
 interface Context { request: Request; env: UserAuthEnv & { DB?: D1Database }; }
 type CaseRow = { id: string; category: string; title: string; description: string; region: string | null; status: string; created_at: string; attention_mode: string | null; commune: string | null; credit_cost: number; view_count: number; contact_accessed: number; preferred: number; contact_name: string | null; contact_email: string | null; contact_phone: string | null; contact_region: string | null; contact_commune: string | null; };
@@ -7,10 +9,11 @@ async function verifiedLawyer(request: Request, env: Context["env"]) {
   const session = await requireUser(request, env, "lawyer");
   if (!session || !env.DB) return { session, profile: null };
   const profile = await env.DB.prepare("SELECT lp.credit_balance, lp.application_status, u.status FROM lawyer_profiles lp JOIN users u ON u.id = lp.user_id WHERE lp.user_id = ? LIMIT 1").bind(session.id).first<{ credit_balance: number; application_status: string; status: string }>();
+  if (profile?.application_status === "approved" && profile.status === "active") profile.credit_balance = (await ensureCurrentBilling(env.DB, session.id)).credit_balance;
   return { session, profile };
 }
 
-export const onRequestGet = async ({ request, env }: Context) => {
+const getCases = async ({ request, env }: Context) => {
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
   const { session, profile } = await verifiedLawyer(request, env);
   if (!session) return Response.json({ error: "No autorizado" }, { status: 401 });
@@ -25,22 +28,23 @@ export const onRequestGet = async ({ request, env }: Context) => {
   if (profile?.application_status === "approved" && requested !== "accessed" && filtered.length) {
     await env.DB.batch(filtered.map((item) => env.DB!.prepare("INSERT OR IGNORE INTO case_views (case_id, viewer_id) VALUES (?, ?)").bind(item.id, session.id)));
   }
-  return Response.json({ cases: filtered, creditBalance: profile?.credit_balance || 0, verified: profile?.application_status === "approved" });
+  return Response.json({ cases: filtered, creditBalance: profile?.credit_balance || 0, verified: profile?.application_status === "approved" }, { headers: { "Cache-Control": "no-store" } });
 };
 
-export const onRequestPost = async ({ request, env }: Context) => {
+const postCase = async ({ request, env }: Context) => {
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
   const { session, profile } = await verifiedLawyer(request, env);
   if (!session) return Response.json({ error: "No autorizado" }, { status: 401 });
   if (profile?.application_status !== "approved" || profile.status !== "active") return Response.json({ error: "Tu perfil debe estar aprobado antes de acceder a casos." }, { status: 403 });
   if (new URL(request.url).searchParams.get("action") !== "access") return Response.json({ error: "Acción no disponible." }, { status: 404 });
-  const body = await request.json() as { caseId?: unknown };
-  const caseId = typeof body.caseId === "string" ? body.caseId : "";
-  if (!caseId) return Response.json({ error: "Caso inválido." }, { status: 400 });
+  const body = await readJsonBody(request, 2048);
+  const caseId = typeof body?.caseId === "string" ? body.caseId : "";
+  if (!caseId || caseId.length > 100) return Response.json({ error: "Caso inválido." }, { status: 400 });
   const legalCase = await env.DB.prepare("SELECT c.id, c.credit_cost, u.full_name, u.email, u.phone, u.region, u.commune FROM legal_cases c JOIN users u ON u.id = c.person_id JOIN case_proposals p ON p.case_id = c.id AND p.lawyer_id = ? AND p.status = 'accepted' WHERE c.id = ? AND c.status = 'matched' LIMIT 1").bind(session.id, caseId).first<{ id: string; credit_cost: number; full_name: string; email: string; phone: string | null; region: string | null; commune: string | null }>();
   if (!legalCase) return Response.json({ error: "Solo puedes ver el contacto cuando el cliente acepta tu propuesta." }, { status: 403 });
   const existing = await env.DB.prepare("SELECT contact_snapshot_json FROM case_accesses WHERE case_id = ? AND lawyer_id = ? LIMIT 1").bind(caseId, session.id).first<{ contact_snapshot_json: string }>();
   if (existing) return Response.json({ alreadyAccessed: true, contact: JSON.parse(existing.contact_snapshot_json), creditBalance: profile.credit_balance });
+  if ((await readBillingConfig(env.DB)).mode === "paid") return Response.json({ error: "El modo de pago aún no tiene una pasarela habilitada. No se cobra ni se consumen créditos de prueba." }, { status: 503 });
   if (profile.credit_balance < legalCase.credit_cost) return Response.json({ error: `Necesitas ${legalCase.credit_cost} créditos y tienes ${profile.credit_balance}.` }, { status: 409 });
   const contact = { fullName: legalCase.full_name, email: legalCase.email, phone: legalCase.phone, region: legalCase.region, commune: legalCase.commune };
   try {
@@ -48,6 +52,19 @@ export const onRequestPost = async ({ request, env }: Context) => {
     const updated = await env.DB.prepare("SELECT credit_balance FROM lawyer_profiles WHERE user_id = ? LIMIT 1").bind(session.id).first<{ credit_balance: number }>();
     return Response.json({ accessed: true, contact, creditBalance: updated?.credit_balance || 0 });
   } catch {
+    // A concurrent successful request is replayed without consuming credits twice.
+    const concurrent = await env.DB.prepare("SELECT contact_snapshot_json FROM case_accesses WHERE case_id = ? AND lawyer_id = ?").bind(caseId, session.id).first<{ contact_snapshot_json: string }>();
+    if (concurrent) {
+      const updated = await env.DB.prepare("SELECT credit_balance FROM lawyer_profiles WHERE user_id = ?").bind(session.id).first<{ credit_balance: number }>();
+      return Response.json({ alreadyAccessed: true, contact: JSON.parse(concurrent.contact_snapshot_json), creditBalance: updated?.credit_balance || 0 });
+    }
     return Response.json({ error: "No pudimos desbloquear el caso. Actualiza la página e intenta nuevamente." }, { status: 409 });
   }
 };
+
+function billingFailure(error: unknown) {
+  if (error instanceof BillingError) return Response.json({ error: error.message }, { status: error.status, headers: { "Cache-Control": "no-store" } });
+  throw error;
+}
+export const onRequestGet = async (context: Context) => { try { return await getCases(context); } catch (error) { return billingFailure(error); } };
+export const onRequestPost = async (context: Context) => { try { return await postCase(context); } catch (error) { return billingFailure(error); } };

@@ -2,6 +2,7 @@ import { isAdmin } from "../../_lib/admin-auth";
 import type { AuthEnv } from "../../_lib/github-auth";
 import type { D1Database } from "../../_lib/user-auth";
 import { adminAuditStatement } from "../../_lib/admin-audit";
+import { readJsonBody } from "../../_lib/http";
 
 interface Context { request: Request; env: AuthEnv & { DB?: D1Database }; }
 type AdminCase = { id: string; category: string; title: string; status: string; credit_cost: number; created_at: string; person_name: string; person_email: string; region: string | null; commune: string | null; access_count: number; view_count: number; };
@@ -16,10 +17,11 @@ export const onRequestGet = async ({ request, env }: Context) => {
 export const onRequestPatch = async ({ request, env }: Context) => {
   if (!await isAdmin(request, env)) return Response.json({ error: "No autorizado" }, { status: 401 });
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
-  const payload = await request.json() as { id?: unknown; creditCost?: unknown };
+  const payload = await readJsonBody(request, 2048);
+  if (!payload) return Response.json({ error: "Solicitud inválida o demasiado grande." }, { status: 400 });
   const id = typeof payload.id === "string" ? payload.id : "";
   const cost = Number(payload.creditCost);
-  if (!id || !Number.isInteger(cost) || cost < 0 || cost > 1000) return Response.json({ error: "Indica un valor entre 0 y 1.000 créditos." }, { status: 400 });
+  if (!id || !Number.isInteger(cost) || cost < 0 || cost > 10000) return Response.json({ error: "Indica un valor entre 0 y 10.000 créditos." }, { status: 400 });
   const existing = await env.DB.prepare("SELECT credit_cost FROM legal_cases WHERE id = ? LIMIT 1").bind(id).first<{ credit_cost: number }>();
   if (!existing) return Response.json({ error: "No encontramos ese caso." }, { status: 404 });
   await env.DB.batch([

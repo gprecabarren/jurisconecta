@@ -1,9 +1,10 @@
 import { cleanText, D1Database, requireUser, UserAuthEnv } from "../_lib/user-auth";
 import { legalAreas } from "../../shared/legal-catalog";
 import { isChileRegion } from "../../shared/chile";
+import { readJsonBody } from "../_lib/http";
+import { readBillingConfig } from "../_lib/billing";
 
 interface Context { request: Request; env: UserAuthEnv & { DB?: D1Database }; }
-type CaseInput = { category?: unknown; topic?: unknown; situation?: unknown; desiredOutcome?: unknown; attentionMode?: unknown; region?: unknown; commune?: unknown; };
 type CaseRow = { id: string; category: string; title: string; description: string; region: string | null; status: string; created_at: string; attention_mode: string | null; commune: string | null; view_count: number; proposal_count: number; accepted_count: number; };
 
 export const onRequestGet = async ({ request, env }: Context) => {
@@ -18,7 +19,8 @@ export const onRequestPost = async ({ request, env }: Context) => {
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
   const session = await requireUser(request, env, "person");
   if (!session) return Response.json({ error: "No autorizado" }, { status: 401 });
-  const payload = await request.json() as CaseInput;
+  const payload = await readJsonBody(request, 12_000);
+  if (!payload) return Response.json({ error: "Solicitud inválida o demasiado grande." }, { status: 400 });
   const category = cleanText(payload.category, 80);
   const topic = cleanText(payload.topic, 120);
   const situation = cleanText(payload.situation, 3000);
@@ -31,8 +33,9 @@ export const onRequestPost = async ({ request, env }: Context) => {
   if (region && !isChileRegion(region)) return Response.json({ error: "Selecciona una region valida de Chile." }, { status: 400 });
   if (!category || !topic || situation.length < 30 || desiredOutcome.length < 10 || !attentionMode) return Response.json({ error: "Completa los detalles principales de tu caso." }, { status: 400 });
   const id = crypto.randomUUID();
+  const billing = await readBillingConfig(env.DB);
   await env.DB.batch([
-    env.DB.prepare("INSERT INTO legal_cases (id, person_id, category, title, description, region, status) VALUES (?, ?, ?, ?, ?, ?, 'open')").bind(id, session.id, category, topic, situation, region || null),
+    env.DB.prepare("INSERT INTO legal_cases (id, person_id, category, title, description, region, status, credit_cost) VALUES (?, ?, ?, ?, ?, ?, 'open', ?)").bind(id, session.id, category, topic, situation, region || null, billing.defaultCaseCreditCost),
     env.DB.prepare("INSERT INTO case_details (case_id, topic, situation, desired_outcome, attention_mode, commune) VALUES (?, ?, ?, ?, ?, ?)").bind(id, topic, situation, desiredOutcome, attentionMode, commune || null),
   ]);
   return Response.json({ id, status: "open" }, { status: 201 });

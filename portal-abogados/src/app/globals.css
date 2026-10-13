@@ -54,7 +54,7 @@ nav a:hover, .text-link:hover { color: var(--gold-light); }
   min-height: 560px;
   padding: 94px max(24px, calc((100vw - 1240px) / 2));
   display: grid;
-  grid-template-columns: 1.03fr .97fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 76px;
   align-items: center;
   position: relative;
@@ -718,6 +718,10 @@ input::placeholder, textarea::placeholder { font-weight: 400; opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .news-card img { transition: none; } }
 
 /* Responsive navigation and touch forms: keep pinch zoom available. */
+.hero-copy { width: 100%; max-width: 1000px; margin-inline: auto; text-align: center; }
+.hero h1 { max-width: 960px; margin-inline: auto; }
+.hero-description { max-width: 710px; margin-inline: auto; }
+.hero-points { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 24px; }
 .portal-sidebar { min-height: 0; height: 100vh; height: 100dvh; overflow: hidden; align-self: start; }
 .portal-logo, .portal-caption, .portal-sidebar-bottom { flex-shrink: 0; }
 .portal-caption { margin-top: 26px; }
@@ -725,6 +729,12 @@ input::placeholder, textarea::placeholder { font-weight: 400; opacity: 1; }
 .portal-sidebar .portal-nav { flex: 1; min-height: 0; width: 100%; margin: 0; display: grid; align-content: start; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 3px 5px 12px 0; }
 .portal-sidebar .portal-nav-item { flex-shrink: 0; font-weight: 500; min-height: 44px; }
 .portal-sidebar-bottom { margin-top: 12px; padding-top: 15px; }
+.portal-topbar { height: auto; min-height: 76px; padding-top: 12px; padding-bottom: 12px; }
+.plan-summary { flex-wrap: wrap; min-width: 0; gap: 8px 16px; }
+.billing-mode-label { color: var(--gold-light); }
+.portal-user { min-width: 0; max-width: 100%; }
+.portal-user .topbar-notice { overflow-wrap: anywhere; }
+.portal-user .avatar { flex-shrink: 0; }
 .portal-menu-toggle { display: none; }
 .portal-main [id] { scroll-margin-top: 24px; }
 .portal-panel, .panel-title > div, .profile-row > div, .admin-search, .managed-row > div { min-width: 0; }
@@ -787,6 +797,7 @@ input::placeholder, textarea::placeholder { font-weight: 400; opacity: 1; }
   .consent-actions { flex-wrap: wrap; }
   .portal-outline-button { display: inline-flex; }
   .portal-user .topbar-notice { display: inline; }
+  .plan-summary span:nth-child(2) { display: inline; }
   .site-header.public-site-header { padding: 10px 16px; flex-wrap: nowrap; min-height: 68px; }
   .public-site-header .brand { font-size: 17px; gap: 7px; }
   .public-site-header .public-header-right { display: none; }

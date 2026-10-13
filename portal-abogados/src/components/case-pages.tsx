@@ -85,7 +85,7 @@ export function LawyerProposalsPage() {
   useEffect(() => { void load(); }, []);
   async function unlock(proposal: Proposal) {
     setBusy(proposal.id); setNotice("");
-    try { const response = await fetch("/api/lawyer/cases?action=access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId: proposal.case_id }) }); const result = await response.json() as { error?: string }; if (!response.ok) throw new Error(result.error || "No pudimos desbloquear el contacto."); setNotice("Contacto autorizado y disponible en Casos accedidos."); }
+    try { const response = await fetch("/api/lawyer/cases?action=access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ caseId: proposal.case_id }) }); const result = await response.json() as { error?: string }; if (!response.ok) throw new Error(result.error || "No pudimos desbloquear el contacto."); setNotice("Contacto autorizado y disponible en Casos accedidos."); window.dispatchEvent(new Event("juris:billing-updated")); }
     catch (cause) { setNotice(cause instanceof Error ? cause.message : "No pudimos desbloquear el contacto."); }
     finally { setBusy(""); }
   }

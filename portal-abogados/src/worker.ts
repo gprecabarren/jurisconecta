@@ -31,7 +31,7 @@ import { onRequestGet as getClientCases, onRequestPatch as updateClientCase, onR
 import { onRequestGet as getPublicContent } from "../functions/api/content";
 import { onRequestPost as submitLawyerApplication } from "../functions/api/lawyer/application";
 import { onRequestGet as getLawyerCases, onRequestPost as accessLawyerCase } from "../functions/api/lawyer/cases";
-import { onRequestGet as getLawyerPlans } from "../functions/api/lawyer/plans";
+import { onRequestGet as getLawyerPlans, onRequestPost as updateLawyerPlan } from "../functions/api/lawyer/plans";
 import { onRequestGet as getLawyerProfile, onRequestPatch as updateLawyerProfile } from "../functions/api/lawyer/profile";
 import { onRequestGet as getLawyerProposals, onRequestPost as createLawyerProposal } from "../functions/api/lawyer/proposals";
 import { onRequestGet as getClientProposals, onRequestPatch as decideClientProposal } from "../functions/api/client/proposals";
@@ -48,6 +48,8 @@ import { serveNews, editorialFeed } from "../functions/_lib/news-public";
 import { handleAdminNews } from "../functions/api/admin/news";
 import { uploadNewsMedia } from "../functions/api/admin/news-media";
 import { handleAdminInvitation, handleAdminMe, handleAdminMembers } from "../functions/_lib/admin-members";
+import { onRequestGet as getAdminBilling, onRequestPatch as updateAdminBilling, onRequestPost as adjustAdminCredits } from "../functions/api/admin/billing";
+import { handlePublicPartners, handleAdminPartners, handlePartnerMedia } from "../functions/_lib/partners";
 
 type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv & GoogleEnv;
 type PageMiddleware = (context: { request: Request; env: AppEnv; next: () => Promise<Response> }) => Promise<Response>;
@@ -70,6 +72,14 @@ async function dispatchApi(request: Request, env: AppEnv, pathname: string): Pro
   if (pathname === "/api/admin/me") return handleAdminMe(request, env);
   if (pathname === "/api/admin/administrators") return handleAdminMembers(request, env);
   if (pathname === "/api/invitaciones-admin") return ["GET", "POST"].includes(method) ? handleAdminInvitation(request, env) : methodNotAllowed(["GET", "POST"]);
+  if (pathname === "/api/partners") return method === "GET" ? handlePublicPartners(request, env) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/admin/partners") return ["GET", "POST", "PATCH"].includes(method) ? handleAdminPartners(request, env) : methodNotAllowed(["GET", "POST", "PATCH"]);
+  if (pathname === "/api/admin/billing") {
+    if (method === "GET") return getAdminBilling({ request, env });
+    if (method === "PATCH") return updateAdminBilling({ request, env });
+    if (method === "POST") return adjustAdminCredits({ request, env });
+    return methodNotAllowed(["GET", "PATCH", "POST"]);
+  }
 
   if (pathname === "/api/auth/providers") return method === "GET" ? Response.json({ google: googleAvailable(env) }, { headers: { "Cache-Control": "no-store" } }) : methodNotAllowed(["GET"]);
   if (pathname === "/api/auth/google/registration") return method === "GET" || method === "POST" ? googleRegistration(request, env) : methodNotAllowed(["GET", "POST"]);
@@ -150,7 +160,11 @@ async function dispatchApi(request: Request, env: AppEnv, pathname: string): Pro
     if (method === "POST") return accessLawyerCase({ request, env });
     return methodNotAllowed(["GET", "POST"]);
   }
-  if (pathname === "/api/lawyer/plans") return method === "GET" ? getLawyerPlans({ request, env }) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/lawyer/plans") {
+    if (method === "GET") return getLawyerPlans({ request, env });
+    if (method === "POST") return updateLawyerPlan({ request, env });
+    return methodNotAllowed(["GET", "POST"]);
+  }
   if (pathname === "/api/lawyer/profile") {
     if (method === "GET") return getLawyerProfile({ request, env });
     if (method === "PATCH") return updateLawyerProfile({ request, env });
@@ -266,6 +280,8 @@ export default {
       if (url.pathname === "/auth/google/callback") return request.method === "GET" ? googleCallback(request, env) : methodNotAllowed(["GET"]);
       if (url.pathname === "/sitemap.xml" || url.pathname === "/noticias/feed.xml") return editorialFeed(request, env);
       if (routePrefix(url.pathname, "/noticias")) return serveNews(request, env);
+      const partnerMedia = url.pathname.match(/^\/aliados\/media\/([a-f\d-]{36})$/i);
+      if (partnerMedia) return ["GET", "HEAD"].includes(request.method) ? handlePartnerMedia(request, env, partnerMedia[1]) : methodNotAllowed(["GET", "HEAD"]);
 
       const protectedResponse = await serveProtectedPage(request, env, url.pathname.replace(/\/$/, "") || "/");
       const response = protectedResponse ?? await env.ASSETS.fetch(request);

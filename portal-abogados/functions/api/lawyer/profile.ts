@@ -3,12 +3,13 @@ import { isChileRegion } from "../../../shared/chile";
 import { validAvatarDataUrl } from "../../_lib/avatar";
 import { professionalLegalAreas } from "../../../shared/legal-catalog";
 import { readJsonBody } from "../../_lib/http";
+import { BillingError, ensureCurrentBilling, readBillingConfig, readBillingPlans } from "../../_lib/billing";
 
 interface Context { request: Request; env: UserAuthEnv & { DB?: D1Database }; }
 type LawyerProfile = { full_name: string; email: string; status: string; phone: string | null; region: string | null; commune: string | null; avatar_data_url: string | null; specialties_json: string; bio: string | null; plan_code: string; credit_balance: number; renewal_date: string | null; application_status: string; application_review_note: string | null; };
 type Application = { rut: string | null; id_document_number: string | null; birth_date: string | null; graduation_date: string | null; university: string | null; attention_mode: string | null; service_localities: string | null; experience_years: number | null; gender: string | null; additional_studies: string | null; work_experience: string | null; linkedin_url: string | null; twitter_url: string | null; youtube_url: string | null; facebook_url: string | null; instagram_url: string | null; website_url: string | null; address: string | null; selected_plan_code: string | null; };
 
-export const onRequestGet = async ({ request, env }: Context) => {
+const getProfile = async ({ request, env }: Context) => {
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
   const session = await requireUser(request, env, "lawyer");
   if (!session) return Response.json({ error: "No autorizado" }, { status: 401 });
@@ -18,7 +19,17 @@ export const onRequestGet = async ({ request, env }: Context) => {
     env.DB.prepare("SELECT document_type, file_name FROM lawyer_application_documents WHERE user_id = ?").bind(session.id).all<{ document_type: string; file_name: string }>(),
   ]);
   if (!profile) return Response.json({ error: "No encontramos tu perfil." }, { status: 404 });
-  return Response.json({ profile, application: application || {}, documents: documents.results });
+  const billing = await ensureCurrentBilling(env.DB, session.id);
+  const [config, plans] = await Promise.all([readBillingConfig(env.DB), readBillingPlans(env.DB, true)]);
+  return Response.json({ profile: { ...profile, ...billing, billing_mode: config.mode, plan_monthly_credits: plans.find((plan) => plan.code === billing.plan_code)?.monthly_credits || 0 }, application: application || {}, documents: documents.results }, { headers: { "Cache-Control": "no-store" } });
+};
+
+export const onRequestGet = async (context: Context) => {
+  try { return await getProfile(context); }
+  catch (error) {
+    if (error instanceof BillingError) return Response.json({ error: error.message }, { status: error.status, headers: { "Cache-Control": "no-store" } });
+    throw error;
+  }
 };
 
 type ProfileUpdate = { fullName?: unknown; phone?: unknown; region?: unknown; commune?: unknown; specialties?: unknown; bio?: unknown; avatarDataUrl?: unknown; };
