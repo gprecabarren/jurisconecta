@@ -18,6 +18,7 @@ async function userCookie(env: ReturnType<typeof environment>, id: string, role:
 }
 const clientId = "person-cliente-prueba", lawyerId = "lawyer-maria-recabarren";
 async function publish(env: ReturnType<typeof environment>, cookie: string) {
+  await env.DB.prepare("UPDATE users SET email_verified_at = CURRENT_TIMESTAMP WHERE id = ?").bind(clientId).run();
   const response = await worker.fetch(request("/api/cases", "POST", { category: "Derecho Familiar", topic: "Divorcio", situation: "Situación completamente ficticia para probar el flujo y los créditos.", desiredOutcome: "Recibir orientación ficticia de prueba.", attentionMode: "remote", region: "Región Metropolitana", commune: "Santiago" }, cookie), env);
   assert.equal(response.status, 201);
   return (await response.json() as { id: string }).id;

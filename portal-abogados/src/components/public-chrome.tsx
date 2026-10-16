@@ -50,7 +50,7 @@ export function PublicHeader({ socialLinks = [], contactEmail = "", home = false
 export function PublicFooter({ socialLinks = [], contactEmail = "" }: { socialLinks?: SocialLink[]; contactEmail?: string }) {
   return <footer className="site-footer section-shell">
     <div className="footer-brand"><Link className="brand" href="/"><span className="brand-mark"><Scale size={20} /></span><span>Juris<span>Conecta</span></span></Link><p>Conexiones legales claras para Chile.</p><div className="footer-social"><h3>Redes y contacto</h3><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="footer" /></div></div>
-    <div><h3>Personas</h3><Link href="/registro">Publicar un caso</Link><Link href="/ingresar">Iniciar sesión</Link><Link href="/cliente">Seguir mis casos</Link></div>
+    <div><h3>Personas</h3><Link href="/solicitar/">Publicar un caso</Link><Link href="/ingresar">Iniciar sesión</Link><Link href="/cliente">Seguir mis casos</Link></div>
     <div><h3>Profesionales</h3><Link href="/registro?tipo=abogado">Crear perfil</Link><Link href="/ingresar">Ingresar</Link></div>
     <div><h3>Soporte</h3><a href="/noticias/">Noticias y guías</a><Link href="/soporte">Ayuda y tickets</Link><Link href="/privacidad">Privacidad</Link><Link href="/terminos">Términos</Link></div>
   </footer>;

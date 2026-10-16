@@ -24,8 +24,8 @@ export const onRequestPatch = async ({ request, env }: Context) => {
   const decision = payload?.decision === "approve" ? "approve" : payload?.decision === "request_changes" ? "request_changes" : "";
   const note = typeof payload?.note === "string" ? payload.note.trim().slice(0, 1000) : "";
   if (!userId || !decision) return Response.json({ error: "Revisión inválida." }, { status: 400 });
-  const current = await env.DB.prepare("SELECT application_status FROM lawyer_profiles WHERE user_id = ? LIMIT 1").bind(userId).first<{ application_status: string }>();
-  if (current?.application_status !== "submitted") return Response.json({ error: "La postulación ya no está pendiente de revisión." }, { status: 409 });
+  const current = await env.DB.prepare("SELECT lp.application_status, u.session_version, u.status FROM lawyer_profiles lp JOIN users u ON u.id = lp.user_id WHERE lp.user_id = ? AND u.role = 'lawyer' AND u.status <> 'suspended' LIMIT 1").bind(userId).first<{ application_status: string; session_version: number; status: string }>();
+  if (current?.application_status !== "submitted") return Response.json({ error: "La postulación ya no está pendiente o la cuenta no tiene un rol profesional habilitado." }, { status: 409 });
   if (decision === "approve") {
     const method = payload?.verificationMethod === "video" || payload?.verificationMethod === "in_person" ? payload.verificationMethod : null;
     const evidenceNote = typeof payload?.evidenceNote === "string" ? payload.evidenceNote.trim().slice(0, 500) : "";
@@ -41,7 +41,7 @@ export const onRequestPatch = async ({ request, env }: Context) => {
     checkWalletLimit(config, planBalance, reserveBalance);
     const guard = crypto.randomUUID();
     try { await env.DB.batch([
-      env.DB.prepare("INSERT INTO billing_transaction_guards (id, valid) SELECT ?, CASE WHEN EXISTS (SELECT 1 FROM lawyer_profiles WHERE user_id = ? AND billing_version = ? AND application_status = 'submitted') AND EXISTS (SELECT 1 FROM billing_config WHERE id = 1 AND version = ?) THEN 1 ELSE 0 END").bind(guard, userId, profile.billing_version, config.version),
+      env.DB.prepare("INSERT INTO billing_transaction_guards (id, valid) SELECT ?, CASE WHEN EXISTS (SELECT 1 FROM lawyer_profiles lp JOIN users u ON u.id = lp.user_id WHERE lp.user_id = ? AND lp.billing_version = ? AND lp.application_status = 'submitted' AND u.role = 'lawyer' AND u.status = ? AND u.status <> 'suspended' AND u.session_version = ?) AND EXISTS (SELECT 1 FROM billing_config WHERE id = 1 AND version = ?) THEN 1 ELSE 0 END").bind(guard, userId, profile.billing_version, current.status, current.session_version, config.version),
       env.DB.prepare("INSERT INTO lawyer_verifications (lawyer_id, method, evidence_note, reviewed_by) VALUES (?, ?, ?, ?)").bind(userId, method, evidenceNote, `github:${admin.login}`),
       env.DB.prepare("UPDATE users SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(userId),
       env.DB.prepare("UPDATE lawyer_profiles SET application_status = 'approved', application_reviewed_at = CURRENT_TIMESTAMP, application_review_note = ? WHERE user_id = ? AND application_status = 'submitted'").bind(note || null, userId),
@@ -50,11 +50,14 @@ export const onRequestPatch = async ({ request, env }: Context) => {
       clearBillingGuard(env.DB, guard),
     ]); } catch { return Response.json({ error: "No se pudo aprobar; revisa si la verificación ya fue registrada." }, { status: 409 }); }
   } else {
-    await env.DB.batch([
+    const guard = crypto.randomUUID();
+    try { await env.DB.batch([
+      env.DB.prepare("INSERT INTO account_transaction_guards (id, valid) SELECT ?, CASE WHEN EXISTS (SELECT 1 FROM lawyer_profiles lp JOIN users u ON u.id = lp.user_id WHERE lp.user_id = ? AND lp.application_status = 'submitted' AND u.role = 'lawyer' AND u.status = ? AND u.status <> 'suspended' AND u.session_version = ?) THEN 1 ELSE 0 END").bind(guard, userId, current.status, current.session_version),
       env.DB.prepare("UPDATE users SET status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(userId),
       env.DB.prepare("UPDATE lawyer_profiles SET application_status = 'changes_requested', application_reviewed_at = CURRENT_TIMESTAMP, application_review_note = ? WHERE user_id = ?").bind(note || "Necesitamos que revises la información enviada.", userId),
       await adminAuditStatement(request, env, env.DB, "lawyer.request_changes", "user", userId),
-    ]);
+      env.DB.prepare("DELETE FROM account_transaction_guards WHERE id = ?").bind(guard),
+    ]); } catch { return Response.json({ error: "La cuenta o postulación cambió durante la revisión. Recarga antes de continuar." }, { status: 409 }); }
   }
   return Response.json({ saved: true });
 };

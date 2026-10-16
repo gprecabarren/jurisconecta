@@ -3,6 +3,7 @@ import { legalAreas } from "../../shared/legal-catalog";
 import { isChileRegion } from "../../shared/chile";
 import { readJsonBody } from "../_lib/http";
 import { readBillingConfig } from "../_lib/billing";
+import { hasVerifiedEmail } from "../_lib/case-intake";
 
 interface Context { request: Request; env: UserAuthEnv & { DB?: D1Database }; }
 type CaseRow = { id: string; category: string; title: string; description: string; region: string | null; status: string; created_at: string; attention_mode: string | null; commune: string | null; view_count: number; proposal_count: number; accepted_count: number; };
@@ -19,6 +20,7 @@ export const onRequestPost = async ({ request, env }: Context) => {
   if (!env.DB) return Response.json({ error: "La base de datos no está conectada." }, { status: 503 });
   const session = await requireUser(request, env, "person");
   if (!session) return Response.json({ error: "No autorizado" }, { status: 401 });
+  if (!await hasVerifiedEmail(env,session.id)) return Response.json({error:"Verifica tu correo con Google antes de publicar una solicitud."},{status:403});
   const payload = await readJsonBody(request, 12_000);
   if (!payload) return Response.json({ error: "Solicitud inválida o demasiado grande." }, { status: 400 });
   const category = cleanText(payload.category, 80);

@@ -16,9 +16,9 @@ export default function IngresarPage() {
     const form = new FormData(event.currentTarget);
     try {
       const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: form.get("email"), password: form.get("password") }) });
-      const result = await response.json() as { error?: string; destination?: string };
+      const result = await response.json() as { error?: string; destination?: string; role?: string };
       if (!response.ok || !result.destination) throw new Error(result.error || "No pudimos iniciar sesión.");
-      window.location.assign(result.destination);
+      window.location.assign(result.role === "person" && new URLSearchParams(window.location.search).get("next") === "/solicitar/" ? "/solicitar/" : result.destination);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No pudimos iniciar sesión.");
       setLoading(false);

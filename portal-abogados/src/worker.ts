@@ -50,6 +50,9 @@ import { uploadNewsMedia } from "../functions/api/admin/news-media";
 import { handleAdminInvitation, handleAdminMe, handleAdminMembers } from "../functions/_lib/admin-members";
 import { onRequestGet as getAdminBilling, onRequestPatch as updateAdminBilling, onRequestPost as adjustAdminCredits } from "../functions/api/admin/billing";
 import { handlePublicPartners, handleAdminPartners, handlePartnerMedia } from "../functions/_lib/partners";
+import { onRequestGet as getCaseTypes } from "../functions/api/case-types";
+import { onRequestGet as getAdminCaseTypes, onRequestPost as createAdminCaseType, onRequestPatch as updateAdminCaseType } from "../functions/api/admin/case-types";
+import { handleIntakeDraft, handleIntakeSubmit } from "../functions/_lib/case-intake";
 
 type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv & GoogleEnv;
 type PageMiddleware = (context: { request: Request; env: AppEnv; next: () => Promise<Response> }) => Promise<Response>;
@@ -69,6 +72,15 @@ function routePrefix(pathname: string, prefix: string) {
 
 async function dispatchApi(request: Request, env: AppEnv, pathname: string): Promise<Response> {
   const method = request.method.toUpperCase();
+  if (pathname === "/api/case-types") return method === "GET" ? getCaseTypes({request,env}) : methodNotAllowed(["GET"]);
+  if (pathname === "/api/admin/case-types") {
+    if (method === "GET") return getAdminCaseTypes({request,env});
+    if (method === "POST") return createAdminCaseType({request,env});
+    if (method === "PATCH") return updateAdminCaseType({request,env});
+    return methodNotAllowed(["GET","POST","PATCH"]);
+  }
+  if (pathname === "/api/intake/draft") return ["GET","POST","DELETE"].includes(method) ? handleIntakeDraft(request,env) : methodNotAllowed(["GET","POST","DELETE"]);
+  if (pathname === "/api/intake/submit") return method === "POST" ? handleIntakeSubmit(request,env) : methodNotAllowed(["POST"]);
   if (pathname === "/api/admin/me") return handleAdminMe(request, env);
   if (pathname === "/api/admin/administrators") return handleAdminMembers(request, env);
   if (pathname === "/api/invitaciones-admin") return ["GET", "POST"].includes(method) ? handleAdminInvitation(request, env) : methodNotAllowed(["GET", "POST"]);
@@ -278,6 +290,7 @@ export default {
       if (url.pathname === "/auth/github/callback") return request.method === "GET" ? githubCallback({ request, env }) : methodNotAllowed(["GET"]);
       if (url.pathname === "/auth/google/start") return request.method === "GET" ? startGoogle(request, env) : methodNotAllowed(["GET"]);
       if (url.pathname === "/auth/google/callback") return request.method === "GET" ? googleCallback(request, env) : methodNotAllowed(["GET"]);
+      if (routePrefix(url.pathname,"/publicar-caso") && ["GET","HEAD"].includes(request.method)) return new Response(null,{status:303,headers:{Location:"/solicitar/","Cache-Control":"no-store"}});
       if (url.pathname === "/sitemap.xml" || url.pathname === "/noticias/feed.xml") return editorialFeed(request, env);
       if (routePrefix(url.pathname, "/noticias")) return serveNews(request, env);
       const partnerMedia = url.pathname.match(/^\/aliados\/media\/([a-f\d-]{36})$/i);
@@ -285,6 +298,13 @@ export default {
 
       const protectedResponse = await serveProtectedPage(request, env, url.pathname.replace(/\/$/, "") || "/");
       const response = protectedResponse ?? await env.ASSETS.fetch(request);
+      if (routePrefix(url.pathname,"/solicitar") || routePrefix(url.pathname,"/encuentra-abogado")) {
+        const privateForm = new Response(response.body,response);
+        privateForm.headers.set("Cache-Control","private, no-store");
+        privateForm.headers.set("Referrer-Policy","no-referrer");
+        privateForm.headers.set("X-Robots-Tag","noindex, nofollow, noarchive");
+        return privateForm;
+      }
       if (["/", "/equipo/", "/soporte/"].includes(url.pathname) && response.headers.get("Content-Type")?.includes("text/html")) {
         return new HTMLRewriter().on("head", { element(element) { element.append('<script src="/measurement.js" defer></script>', { html: true }); } }).transform(response);
       }

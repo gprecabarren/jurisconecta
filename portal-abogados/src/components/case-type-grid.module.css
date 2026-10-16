@@ -1,0 +1,18 @@
+.catalog { width: 100%; min-width: 0; }
+.grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 12px; }
+.card { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 15px; padding: 20px 16px; min-height: 155px; min-width: 0; border: 1px solid var(--line); background: linear-gradient(145deg,var(--surface-raised),var(--surface)); color: var(--ink); border-radius: 20px; text-align: left; text-decoration: none; transition: transform .18s ease,border-color .18s ease,background .18s ease; }
+.card:hover { transform: translateY(-3px); border-color: var(--gold); }
+.card:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.cardText { line-height: 1.45; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; padding-right: 5px; }
+.icon { display: grid; place-items: center; height: 40px; width: 40px; color: var(--gold); background: rgba(212,169,108,.09); border-radius: 12px; }
+.arrow { color: var(--quiet); position: absolute; top: 26px; right: 15px; }
+.more { display: flex; justify-content: center; margin-top: 26px; }
+.more span { color: var(--muted); font-size: 12px; }
+.search { display: flex; flex-direction: column; gap: 9px; margin-bottom: 22px; color: var(--muted); font-size: 13px; font-weight: 400; }
+.search input { width: min(100%,540px); border: 1px solid var(--line); border-radius: 14px; min-height: 48px; padding: 12px 15px; background: var(--canvas); color: var(--ink); font: inherit; font-size: 16px; font-weight: 400; }
+.empty, .warning { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.warning { margin-top: 16px; }
+@media (max-width: 1050px) { .grid { grid-template-columns: repeat(3,minmax(0,1fr)); } .card { min-height: 140px; } }
+@media (max-width: 620px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .card { padding: 16px 14px; min-height: 147px; border-radius: 17px; } .cardText { font-size: 13px; } }
+@media (max-width: 340px) { .grid { grid-template-columns: 1fr; } .card { min-height: 92px; flex-direction: row; align-items: center; padding-right: 34px; } .icon { flex-shrink: 0; } .arrow { top: 38px; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }

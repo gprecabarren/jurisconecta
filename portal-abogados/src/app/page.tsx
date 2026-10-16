@@ -6,23 +6,14 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   Check,
-  ChevronRight,
   FileText,
   MapPin,
   MessageSquareText,
-  Search,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
 import { PartnersCarousel } from "@/components/partners-carousel";
-
-const areas = [
-  { title: "Familia", cases: ["Pensión de alimentos", "Divorcio", "Régimen de visitas", "Violencia intrafamiliar"] },
-  { title: "Civil", cases: ["Herencias y posesiones efectivas", "Deudas y embargos", "Arriendo y propiedades", "Problemas entre vecinos"] },
-  { title: "Laboral", cases: ["Despido injustificado", "Defensa de derechos laborales", "Accidentes del trabajo", "Cobro de prestaciones"] },
-  { title: "Penal", cases: ["Accidentes de tránsito", "Robos y hurtos", "Injurias y calumnias", "Delitos económicos"] },
-];
+import { CaseTypeGrid } from "@/components/case-type-grid";
 
 const steps = [
   { icon: FileText, title: "Cuéntanos tu caso", copy: "Selecciona una materia y responde algunas preguntas simples. Publicar es gratis; evita incluir datos sensibles en la descripción." },
@@ -31,9 +22,6 @@ const steps = [
 ];
 
 export default function Home() {
-  const [selectedArea, setSelectedArea] = useState(areas[0]);
-  const [selectedCase, setSelectedCase] = useState<string | null>(null);
-
   return (
     <main>
 
@@ -47,7 +35,7 @@ export default function Home() {
             <li><Check size={17} /> Atención presencial u online</li>
             <li><Check size={17} /> Profesionales con perfiles revisados</li>
           </ul>
-          <Link className="primary-button" href="/registro">Encontrar un abogado <ArrowRight size={18} /></Link>
+          <Link className="primary-button" href="/#casos">Cuéntanos tu caso <ArrowRight size={18} /></Link>
         </div>
       </section>
 
@@ -76,42 +64,11 @@ export default function Home() {
           <div className="section-heading finder-heading" data-reveal data-reveal-from="right">
             <div>
               <p className="eyebrow">Primer paso</p>
-              <h2>Abogados de familia, civil, laboral y penal</h2>
+              <h2>¿Qué situación necesitas resolver?</h2>
             </div>
-            <p>Elige una categoría y luego el tipo de caso. Podrás entregar más detalles después.</p>
+            <p>Elige tu tipo de caso y comienza sin registrarte. Al final crearás tu cuenta y verificarás tu correo para publicarlo.</p>
           </div>
-          <div className="finder-layout" data-reveal data-reveal-from="left">
-            <div className="area-menu" role="tablist" aria-label="Áreas legales">
-              {areas.map((area) => (
-                <button
-                  className={selectedArea.title === area.title ? "area-item active" : "area-item"}
-                  key={area.title}
-                  onClick={() => { setSelectedArea(area); setSelectedCase(null); }}
-                  role="tab"
-                  aria-selected={selectedArea.title === area.title}
-                >
-                  <span>{area.title}</span><ChevronRight size={18} />
-                </button>
-              ))}
-              <Link className="area-item all-cases" href="/encuentra-abogado"><span>Ver todas las materias</span><Search size={17} /></Link>
-            </div>
-            <div className="case-grid" aria-live="polite">
-              {selectedArea.cases.map((caseName) => (
-                <button
-                  className={selectedCase === caseName ? "case-card selected" : "case-card"}
-                  key={caseName}
-                  onClick={() => setSelectedCase(caseName)}
-                >
-                  <span>{caseName}</span>
-                  <ArrowRight size={18} />
-                </button>
-              ))}
-              <Link className="case-cta" href={selectedCase ? `/registro?caso=${encodeURIComponent(selectedCase)}` : "/registro"}>
-                <span>{selectedCase ? `Continuar con: ${selectedCase}` : "Selecciona un caso para continuar"}</span>
-                <ArrowRight size={19} />
-              </Link>
-            </div>
-          </div>
+          <CaseTypeGrid />
         </div>
       </section>
 

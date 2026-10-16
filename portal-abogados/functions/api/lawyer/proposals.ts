@@ -26,6 +26,7 @@ export const onRequestPost = async ({ request, env }: Context) => {
   if (profile?.application_status !== "approved" || profile.status !== "active") return Response.json({ error: "Debes estar aprobado para proponer." }, { status: 403 });
   const legalCase = await env.DB.prepare("SELECT person_id, status FROM legal_cases WHERE id = ? LIMIT 1").bind(caseId).first<{ person_id: string; status: string }>();
   if (!legalCase || legalCase.status !== "open") return Response.json({ error: "El caso ya no recibe propuestas." }, { status: 409 });
+  if (legalCase.person_id === session.id) return Response.json({ error: "No puedes proponer servicios en un caso propio de tu rol anterior." }, { status: 403 });
   const id = crypto.randomUUID();
   try {
     await env.DB.prepare("INSERT INTO case_proposals (id, case_id, lawyer_id, message, fee_amount) VALUES (?, ?, ?, ?, ?)").bind(id, caseId, session.id, message, fee).run();

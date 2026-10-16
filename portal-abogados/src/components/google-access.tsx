@@ -9,17 +9,18 @@ const errors: Record<string, string> = {
   disabled: "Esta cuenta no está disponible. Contacta a soporte.", link: "Usa la misma cuenta Google y el mismo correo de tu cuenta de JurisConecta.",
 };
 export function GoogleAccess({ intent = "login", role = "person", preview = false }: { intent?: "login" | "register"; role?: "person" | "lawyer"; preview?: boolean }) {
-  const [enabled, setEnabled] = useState<boolean | null>(null), [error, setError] = useState("");
+  const [enabled, setEnabled] = useState<boolean | null>(null), [error, setError] = useState(""), [returnTo,setReturnTo] = useState("");
   useEffect(() => {
     if (preview) return;
     let active = true;
     void fetch("/api/auth/providers").then((r) => r.json() as Promise<{ google?: boolean }>).then((data) => { if (active) setEnabled(data.google === true); }).catch(() => { if (active) setEnabled(false); });
     const reason = new URLSearchParams(window.location.search).get("google_error");
+    if (new URLSearchParams(window.location.search).get("next") === "/solicitar/") void Promise.resolve().then(()=>{if(active)setReturnTo("&next=%2Fsolicitar%2F");});
     if (reason) void Promise.resolve().then(() => { if (active) setError(errors[reason] || errors.invalid); });
     return () => { active = false; };
   }, [preview]);
   const icon = <Image src="/google-signin-icon.png" width={40} height={40} unoptimized alt="" aria-hidden="true" />;
-  return <div className="google-access">{preview ? <button className="google-button" type="button" disabled>{icon}Continuar con Google (demostración)</button> : enabled ? <a className="google-button" href={`/auth/google/start?intent=${intent}&role=${role}`}>{icon}{intent === "register" ? "Crear cuenta con Google" : "Continuar con Google"}</a> : <p className="google-unavailable" role="status">{enabled === null ? "Comprobando acceso con Google…" : "Acceso con Google en preparación."}</p>}{error && <p role="alert" className="form-message">{error}</p>}<p className="auth-divider">o continúa con correo</p></div>;
+  return <div className="google-access">{preview ? <button className="google-button" type="button" disabled>{icon}Continuar con Google (demostración)</button> : enabled ? <a className="google-button" href={`/auth/google/start?intent=${intent}&role=${role}${returnTo}`}>{icon}{intent === "register" ? "Crear cuenta con Google" : "Continuar con Google"}</a> : <p className="google-unavailable" role="status">{enabled === null ? "Comprobando acceso con Google…" : "Acceso con Google en preparación."}</p>}{error && <p role="alert" className="form-message">{error}</p>}<p className="auth-divider">o continúa con correo</p></div>;
 }
 
 export function GoogleAccountSecurity() {

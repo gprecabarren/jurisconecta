@@ -11,3 +11,5 @@ La producción se sirve desde el Worker de Cloudflare `jurisconecta`, enlazado e
 El acceso administrativo mediante GitHub OAuth está configurado y verificado en el dominio oficial.
 
 Actualización del **13 de octubre de 2026**: portada sin la tarjeta retirada, carrusel de colaboraciones administrable y planes con créditos de período/reserva, historial y reglas configurables. Producción permanece en **modo gratuito**, sin pasarela de pago. Detalles, pruebas y pendientes en [el informe de la actualización](portal-abogados/docs/PLANES-CREDITOS-ALIADOS-2026-10-13.md).
+
+Actualización del **15 de octubre de 2026**: roles exclusivos por correo y cambio administrativo seguro; 78 tipos de caso, home de 18 tarjetas (3 × 6 en escritorio), formularios editables y borrador privado antes de registrarse. La verificación disponible al final es Google, sin envío de códigos de correo ni servicios pagados. [Informe y ruta de pruebas](portal-abogados/docs/ROLES-CATALOGO-SOLICITUDES-2026-10-15.md).

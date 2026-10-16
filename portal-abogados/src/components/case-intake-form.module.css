@@ -1,0 +1,25 @@
+.fields { display: grid; gap: 22px; min-width: 0; }
+.contactGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.field { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.field label { color: var(--ink); font-weight: 400; font-size: 14px; line-height: 1.6; }
+.field label span { color: var(--gold); }
+.field label small { color: var(--quiet); font-weight: 400; }
+.field input, .field textarea, .field select { width: 100%; min-width: 0; padding: 13px 15px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: var(--canvas); font: inherit; font-size: 16px; font-weight: 400; min-height: 48px; }
+.field textarea { resize: vertical; line-height: 1.6; }
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.counter, .description { color: var(--muted); font-weight: 400; line-height: 1.6; }
+.counter { font-size: 12px; }
+.description { margin: 0 0 4px; font-size: 14px; }
+.message { padding: 14px 18px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 14px; line-height: 1.65; margin-top: 18px; color: var(--muted); overflow-wrap: anywhere; }
+.message p { margin: 0 0 8px; }
+.message ul { padding-left: 20px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 28px; }
+.preview { border: 1px solid var(--line); border-radius: 22px; padding: 24px; background: var(--surface); min-width: 0; }
+.preview h3 { margin: 20px 0 8px; color: var(--ink); }
+.preview h4 { margin: 0 0 20px; font-size: 15px; color: var(--gold); }
+.preview > p { color: var(--muted); line-height: 1.7; }
+.previewBanner { font-size: 12px; color: var(--gold) !important; margin: 0 0 18px; }
+.stepNav { display: flex; flex-wrap: wrap; gap: 8px; }
+.stepNav button { border: 1px solid var(--line); background: var(--canvas); color: var(--muted); border-radius: 20px; padding: 8px 12px; min-height: 44px; text-align: left; }
+.stepNav button[aria-current="step"] { color: var(--gold); border-color: var(--gold); }
+@media (max-width: 600px) { .preview { padding: 16px; } .actions > * { justify-content: center; } .contactGrid { grid-template-columns: minmax(0,1fr); } }

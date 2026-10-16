@@ -36,7 +36,7 @@ export function RegistrationForm({ preview = false, previewRole, onPreviewContin
       const response = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fullName: form.get("fullName"), email: form.get("email"), password: form.get("password"), phone: form.get("phone"), region: form.get("region"), commune: form.get("commune"), role }) });
       const result = await response.json() as { error?: string; destination?: string };
       if (!response.ok || !result.destination) throw new Error(result.error || "No pudimos crear tu cuenta.");
-      window.location.assign(result.destination);
+      window.location.assign(role === "person" && searchParams.get("next") === "/solicitar/" ? "/solicitar/" : result.destination);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No pudimos crear tu cuenta.");
       setLoading(false);
@@ -47,7 +47,7 @@ export function RegistrationForm({ preview = false, previewRole, onPreviewContin
     <Link className="auth-brand" href="/"><span><Scale size={20} /></span>JurisConecta</Link>
     <section className="auth-card">
       <p className="eyebrow">Crear una cuenta</p><h1>Comienza de la forma que te sirva.</h1>
-      <p className="auth-intro">Las cuentas profesionales quedan pendientes de revisión antes de recibir oportunidades.</p>
+      <p className="auth-intro">Cada correo tiene un solo tipo de cuenta: cliente o abogado. Solo administración puede cambiarlo. Las cuentas profesionales quedan pendientes de revisión antes de recibir oportunidades.</p>
       <div className="role-picker"><button className={role === "person" ? "role-option selected" : "role-option"} onClick={() => setRole("person")} type="button"><CircleUserRound size={22} /><span><strong>Busco un abogado</strong><small>Publicaré y revisaré mis casos</small></span></button><button className={role === "lawyer" ? "role-option selected" : "role-option"} onClick={() => setRole("lawyer")} type="button"><BriefcaseBusiness size={22} /><span><strong>Soy abogado/a</strong><small>Crearé mi perfil profesional</small></span></button></div>
       <GoogleAccess intent="register" role={role} preview={preview} />
       <form className="auth-form" onSubmit={register} noValidate={preview}>

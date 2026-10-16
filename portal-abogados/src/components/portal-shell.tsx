@@ -57,6 +57,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
         { href: "/admin#administradores", label: "Administradores GitHub", icon: ShieldCheck },
         { href: "/admin#postulaciones", label: "Postulaciones", icon: FileCheck2 },
         { href: "/admin#casos", label: "Casos y créditos", icon: WalletCards },
+        { href: "/admin#tipos-casos", label: "Casos y formularios", icon: FileCheck2 },
         { href: "/admin#planes-creditos", label: "Planes y créditos", icon: WalletCards },
         { href: "/admin#colaboraciones", label: "Empresas y estudios", icon: BriefcaseBusiness },
         { href: "/admin#equipo", label: "Equipo", icon: UsersRound },
