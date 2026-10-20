@@ -68,7 +68,7 @@ Se retiraron ambas reglas `.hero::after` que generaban el trazo vertical. Se con
 
 Validación: **103/103 pruebas**, TypeScript, ESLint, build de 35 rutas y despliegue en seco correctos. Chrome local: escritorio de 1521 px útiles y viewports solicitados de 1181, 1180, 768, 641, 640, 390 y 320 px, todos sin desbordamiento. Solo escritorio muestra la nueva fila; móvil conserva un grupo dentro del menú. Se comprobó apertura del menú y cierre al navegar a una sección. El pseudo-elemento eliminado devuelve `content: none`. [Captura del ajuste, demo local](proofs/header-rrss-desktop-20261020.jpg).
 
-No se modifican APIs, SEO editorial, autenticación, base de datos, recursos de marca ni planes; Chile3X queda fuera del cambio. Publicación y comprobaciones finales: pendientes de registrar tras desplegar.
+No se modifican APIs, SEO editorial, autenticación, base de datos, recursos de marca ni planes; Chile3X queda fuera del cambio. Publicado el **20 de octubre, aproximadamente a las 20:22 de Santiago**, Worker **`9e5105ff-e1f1-4c01-925e-70b80a2d7f7a`**, código [`45e09f1`](https://github.com/gprecabarren/jurisconecta/commit/45e09f1). Inicio, noticias, una guía, soporte y login responden 200 con la fila nueva y ambos grupos de redes (escritorio/menú); CSS publicado sin regla vertical y salud 200. Chrome de producción confirmó redes debajo de accesos, header sticky y `::after` sin contenido. El commit documental que contiene este cierre registra la verificación posterior. No se guardaron datos de prueba en producción.
 
 ## Siguiente revisión
 

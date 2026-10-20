@@ -25,3 +25,5 @@ Actualización del **20 de octubre de 2026**: identidad oficial negro tinta/oro 
 Publicado y verificado: Worker `264759f3-5b9c-45c3-a387-c342410b4515`, [código `d357fcc`](https://github.com/gprecabarren/jurisconecta/commit/d357fcc), 22 comprobaciones HTTP sin fallos. Las plantillas mantienen los envíos deshabilitados.
 
 Ajuste visual posterior del **20 de octubre**: redes sociales en una segunda fila del header fijo de escritorio, manteniendo el menú móvil; se retiró la raya vertical decorativa del inicio y se ajustó el espacio de las anclas. **103 pruebas aprobadas**, sin cambios de datos ni servicios. [Detalle y evidencia](portal-abogados/docs/IDENTIDAD-OFICIAL-2026-10-20.md#ajuste-posterior-del-header).
+
+Versión actual de este ajuste: `9e5105ff-e1f1-4c01-925e-70b80a2d7f7a`, [código `45e09f1`](https://github.com/gprecabarren/jurisconecta/commit/45e09f1). Inicio, noticias, guía, soporte, login y salud verificados; Chrome confirmó posición de RRSS y eliminación de la raya.
