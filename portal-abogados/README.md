@@ -1,10 +1,14 @@
 # JurisConecta
 
+![Identidad oficial de JurisConecta](public/brand/logo-email.png)
+
 Portal chileno para conectar personas con abogados verificados. Sitio: [jurisconecta.cl](https://jurisconecta.cl). Repositorio: [gprecabarren/jurisconecta](https://github.com/gprecabarren/jurisconecta). Estado revisado el **20 de octubre de 2026**. Es un **piloto**, no un producto aprobado para captar causas reales.
 
 Última entrega: [soporte, correos y formularios — 19 de octubre](docs/SOPORTE-CORREOS-FORMULARIOS-2026-10-19.md). Ese informe distingue implementación, pruebas locales y verificación del despliegue; incluye pendientes operativos y una ruta de pruebas sin usar datos reales.
 
 Identidad oficial incorporada el **20 de octubre**: negro tinta `#111617` / oro mate `#D8BD83`, firma compacta, logo horizontal/vertical y monograma J suministrados por el propietario. Sustituye la marca genérica en el sitio, accesos, paneles, mantenimiento, favicon/iconos móviles, tarjetas sociales, noticias y plantillas de correo. SVG con letras trazadas, sin fuentes externas para el logo; Manrope se mantiene en la interfaz. **101 pruebas aprobadas**. [Cobertura, evidencias y publicación](docs/IDENTIDAD-OFICIAL-2026-10-20.md). Sin cambios de datos ni nuevos servicios de pago.
+
+Versión actual desplegada: **`264759f3-5b9c-45c3-a387-c342410b4515`**, código [`d357fcc`](https://github.com/gprecabarren/jurisconecta/commit/d357fcc). Las 22 comprobaciones HTTP posteriores no presentaron fallos; los 13 assets probados coinciden exactamente con la entrega preparada. Sin migraciones ni sobrescritura de contenido real. Los registros de versiones siguientes en este README son históricos y conservan su fecha.
 
 ## Arquitectura y límites de costo
 

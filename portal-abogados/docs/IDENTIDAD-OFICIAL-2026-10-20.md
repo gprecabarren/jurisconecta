@@ -50,11 +50,15 @@ Los assets finales están versionados y el build normal no necesita herramientas
 - **101/101 pruebas**, TypeScript, ESLint y build de 35 rutas correctos; tipos Wrangler comprobados y despliegue en seco correcto. Paquete Worker: 774,65 KiB / 178,69 KiB gzip, 406 archivos estáticos.
 - Siete pruebas de marca: máscaras y trazados, recursos autónomos sin código activo, render/accesibilidad/dimensiones de componentes, reemplazo de superficies, PNG/ICO/manifest y mantenimiento con autenticación conservada. Dos pruebas adicionales de correo comprueban imagen fija y preservación de contenido anterior.
 - Chrome local: escritorio de 1521 px útiles, viewports 390 × 844 y 320 × 740 sin overflow horizontal; header/firma y figura SVG cargados. Login con campos de 16 px, menú móvil de nueve enlaces, sidebar con scroll y mantenimiento revisados. No equivale a prueba física en Safari/iPhone.
-- [Portada escritorio, demo local](proofs/identidad-home-desktop-20261020.jpg), [móvil, demo local](proofs/identidad-home-movil-20261020.jpg), [panel administrativo ficticio](proofs/identidad-admin-demo-20261020.jpg).
+- [Portada escritorio, demo local](proofs/identidad-home-desktop-20261020.jpg), [móvil, demo local](proofs/identidad-home-movil-20261020.jpg), [panel administrativo ficticio](proofs/identidad-admin-demo-20261020.jpg) y [correo ficticio con logo oficial](proofs/identidad-correo-demo-20261020.jpg). La imagen del correo cargó desde el dominio oficial (670 × 200), dentro del iframe aislado, sin errores de consola observados ni envío de mensajes.
 
 ## Publicación
 
-Pendiente de completar tras desplegar y comprobar el dominio oficial. El destino es exclusivamente Worker `jurisconecta`, dominios `jurisconecta.cl` / `www.jurisconecta.cl`; no se requieren migraciones D1.
+Desplegado el **20 de octubre, aproximadamente a las 19:30 de Santiago**. Worker `jurisconecta`, versión **`264759f3-5b9c-45c3-a387-c342410b4515`**, únicamente dominios `jurisconecta.cl` / `www.jurisconecta.cl`; startup del despliegue: 15 ms. Código en GitHub: [`d357fcc`](https://github.com/gprecabarren/jurisconecta/commit/d357fcc). El commit documental que contiene este cierre registra la verificación posterior. No se ejecutaron migraciones ni escrituras de prueba en D1 remota.
+
+**22 comprobaciones HTTP, cero fallos:** los 13 recursos probados de marca/favicon/iconos/manifest/imagen social devuelven 200, tipo correcto y bytes idénticos a sus archivos locales. Inicio, login, registro, noticias y una guía publicada muestran firma oficial y metadatos sociales nuevos; la guía usa el logo oficial en su publisher JSON-LD. Salud devuelve 200; la API administrativa sin sesión devuelve 401 y las páginas admin/cliente redirigen al acceso correspondiente.
+
+Chrome confirmó la figura SVG cargada en la portada oficial y se dejó esa pestaña abierta para revisar. No se pudo guardar captura de producción por un fallo del mecanismo de captura; las evidencias adjuntas son de la misma versión en demo local, claramente identificadas. Los tres SVG de web coinciden por SHA-256 con el ZIP original. El logo previo y los residuos eliminados son recuperables en el historial Git, sin tocar los originales del propietario.
 
 ## Siguiente revisión
 

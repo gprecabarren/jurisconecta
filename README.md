@@ -1,5 +1,7 @@
 # JurisConecta
 
+![Identidad oficial de JurisConecta](portal-abogados/public/brand/logo-email.png)
+
 Portal chileno para conectar personas con abogados verificados.
 
 - Sitio oficial: [jurisconecta.cl](https://jurisconecta.cl)
@@ -19,3 +21,5 @@ Actualización del **19 de octubre de 2026**: soporte con historial paginado, b�
 Entrega desplegada y verificada: Worker `b11f2c94-e260-432e-9f40-3751fc0eedb6`, [commit de implementación `62f1a1a`](https://github.com/gprecabarren/jurisconecta/commit/62f1a1a). Pasan 92 pruebas; migraciones 0019/0020 aplicadas solo a JurisConecta, conservando cuentas/casos/créditos y modo gratuito. El informe incluye la ruta de testeo y los pendientes antes de un piloto real.
 
 Actualización del **20 de octubre de 2026**: identidad oficial negro tinta/oro mate aplicada en sitio público, paneles, accesos, mantenimiento, favicon/iconos, imagen social, noticias y correos. Se retiró la marca genérica; se conservan los SVG oficiales, sus máscaras y proporciones. Pasan **101 pruebas**. [Informe de identidad y despliegue](portal-abogados/docs/IDENTIDAD-OFICIAL-2026-10-20.md). Sin migraciones, cambios económicos ni modificaciones de Chile3X.
+
+Publicado y verificado: Worker `264759f3-5b9c-45c3-a387-c342410b4515`, [código `d357fcc`](https://github.com/gprecabarren/jurisconecta/commit/d357fcc), 22 comprobaciones HTTP sin fallos. Las plantillas mantienen los envíos deshabilitados.
