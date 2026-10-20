@@ -105,18 +105,24 @@ La última orden abre `http://127.0.0.1:3008/`, únicamente en loopback. Usa una
 
 ## 4. Despliegue y trazabilidad
 
-**Pendiente de completar al cerrar el despliegue:** esta sección no declara aplicadas migraciones ni una versión nueva sin verificación.
+**Desplegado y verificado el 19 de octubre de 2026, aproximadamente a las 21:16 de Santiago.** El código de esta entrega está en GitHub y Cloudflare. La comprobación autenticada se hizo en pestañas nuevas, sin recargar la pestaña original del usuario ni modificar contenido real.
 
 | Control | Registro de cierre |
 | --- | --- |
 | Worker/base | Exclusivamente `jurisconecta` / `jurisconecta-db` (`106131c9-81eb-49de-9418-421ccc172576`) |
-| Migraciones nuevas | `0019_support_operations.sql` y `0020_email_templates.sql`; pendientes de comprobar/aplicar individualmente |
+| Migraciones nuevas | Aplicadas individualmente: `0019_support_operations.sql` (34 consultas) y `0020_email_templates.sql` (3 consultas). Las seis tablas nuevas están presentes; `PRAGMA foreign_key_check` sin errores. No repetirlas. |
 | Catálogo | Sin migración masiva ni sobrescritura de formularios personalizados |
-| Bookmark previo/posterior | Pendiente de registrar al aplicar |
-| Invariantes | Pendiente comparar cuentas/casos/créditos, modo `free`, mantenimiento y subida documental desactivados |
-| Versión Worker | Pendiente de despliegue y verificación |
-| Commits GitHub | Pendientes de cierre por el agente principal |
-| Comprobaciones públicas/privadas | Pendientes de registrar tras desplegar |
+| Bookmark previo | `000001e8-00000000-0000510a-73dc1c2d04308f1093032831e154f9d2` |
+| Bookmark tras 0020 | `000001e9-00000010-0000510a-e827715303ff4f5afec92dd66f43779b` |
+| Bookmark tras verificación | `000001e9-00000014-0000510a-c30ef1e2f712860adebe4f521efd76d9` |
+| Invariantes antes/después | 4 cuentas, 3 perfiles de abogado, 1 caso, 1.676 créditos, 0 tickets/mensajes. Modo `free`, mantenimiento `0`; subida documental sigue `false`. No se cambiaron roles ni saldos. |
+| Versión Worker | `b11f2c94-e260-432e-9f40-3751fc0eedb6`; startup medido por el despliegue: 15 ms. Dominios exclusivamente JurisConecta. |
+| Código en GitHub | [`62f1a1a`](https://github.com/gprecabarren/jurisconecta/commit/62f1a1a), rama `codex/mvp-inicial`. El commit documental que contiene este cierre registra la verificación posterior. |
+| Comprobaciones públicas/privadas | 11 comprobaciones HTTP, 0 fallos; editor y bandeja autenticados cargaron en Chrome sin errores de consola observados. |
+
+En producción: inicio, soporte, salud, sitemap y robots respondieron 200. El catálogo completo devolvió 78 tipos con ficha editorial y el resumen 78 tarjetas sin preguntas/referencias. Las APIs de tickets/plantillas rechazaron acceso anónimo con 401 y `no-store`/`noindex`; `/admin/correos/` redirigió a GitHub con las mismas protecciones. El sitemap no incluye administración.
+
+En Chrome se comprobaron las 12 plantillas predeterminadas y «Probar sin enviar» con datos ficticios; la bandeja mostró cero tickets y los filtros/responsable correctos. No se guardaron ni publicaron plantillas reales: las tablas de plantillas/versiones permanecieron vacías y los ejemplos se sirven como valores iniciales editables. No se crearon tickets/casos/cuentas de prueba en producción ni se enviaron emails. Las capturas adjuntas son de la demo local; la captura de pantalla de producción no estuvo disponible, aunque sí se verificó el contenido y la vista previa mediante la interfaz.
 
 No ejecutar `wrangler d1 migrations apply --remote` en bloque: las migraciones históricas se aplicaron manualmente y el registro del CLI no representa el esquema remoto real. Antes de modificar la base, comprobar esquema, cuenta/base exactas y bookmark de recuperación disponible. Aplicar solo los archivos nuevos necesarios y conservar los datos reales. Un rollback del Worker no revierte automáticamente el esquema; las dos migraciones son aditivas.
 
