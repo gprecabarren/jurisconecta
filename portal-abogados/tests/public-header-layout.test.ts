@@ -31,5 +31,8 @@ test("hero no longer paints the vertical pseudo-element and desktop social layou
   const desktop = css.slice(css.indexOf("/* Desktop keeps navigation/actions"));
   assert.match(desktop, /@media\s*\(min-width:\s*1181px\)/);
   assert.match(desktop, /\.public-header-social-row\s*\{\s*display:\s*flex;/);
+  assert.match(desktop, /grid-template-columns:\s*minmax\(0, 1fr\) auto auto;/);
+  assert.match(desktop, /\.public-site-header \.public-main-nav\s*\{[^}]*grid-column:\s*2;[^}]*margin-left:\s*0;/);
+  assert.match(desktop, /\.public-header-social-row\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2;[^}]*justify-content:\s*flex-start;/);
   assert.match(desktop, /#como-funciona, #casos, #confianza\s*\{\s*scroll-margin-top:\s*136px;/);
 });

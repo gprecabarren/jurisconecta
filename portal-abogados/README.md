@@ -10,7 +10,7 @@ Identidad oficial incorporada el **20 de octubre**: negro tinta `#111617` / oro 
 
 Versión actual desplegada: **`9e5105ff-e1f1-4c01-925e-70b80a2d7f7a`**, código [`45e09f1`](https://github.com/gprecabarren/jurisconecta/commit/45e09f1), con identidad oficial y ajuste posterior del header. **103 pruebas aprobadas**; cinco páginas públicas, CSS y salud verificados sin fallos. Chrome confirmó RRSS debajo de los accesos, header sticky y raya ausente. Sin migraciones ni sobrescritura de contenido real. Los registros de versiones siguientes en este README son históricos y conservan su fecha.
 
-Ajuste posterior del header: las RRSS ocupan una segunda fila en escritorio (desde 1181 px), con logo, navegación y accesos arriba; el header sigue fijo y el móvil mantiene sus redes dentro del menú. Se quitaron las dos reglas que dibujaban la raya vertical del inicio y se dejó margen para anclas bajo el nuevo header. **103/103 pruebas**, TypeScript, ESLint, build y dry run correctos; siete anchos de prueba sin overflow. [Evidencia y cierre](docs/IDENTIDAD-OFICIAL-2026-10-20.md#ajuste-posterior-del-header).
+Ajuste posterior del header: las RRSS ocupan una segunda fila en escritorio (desde 1181 px), ahora **alineadas debajo de «Cómo funciona»**, separadas de los botones de acceso. El header sigue fijo y el móvil mantiene sus redes dentro del menú. Se quitaron las dos reglas que dibujaban la raya vertical del inicio y se dejó margen para anclas bajo el nuevo header. **103/103 pruebas**, TypeScript, ESLint, build y dry run correctos. [Evidencia y cierre](docs/IDENTIDAD-OFICIAL-2026-10-20.md#corrección-de-alineación).
 
 ## Arquitectura y límites de costo
 

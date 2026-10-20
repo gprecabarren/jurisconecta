@@ -70,6 +70,12 @@ Validación: **103/103 pruebas**, TypeScript, ESLint, build de 35 rutas y despli
 
 No se modifican APIs, SEO editorial, autenticación, base de datos, recursos de marca ni planes; Chile3X queda fuera del cambio. Publicado el **20 de octubre, aproximadamente a las 20:22 de Santiago**, Worker **`9e5105ff-e1f1-4c01-925e-70b80a2d7f7a`**, código [`45e09f1`](https://github.com/gprecabarren/jurisconecta/commit/45e09f1). Inicio, noticias, una guía, soporte y login responden 200 con la fila nueva y ambos grupos de redes (escritorio/menú); CSS publicado sin regla vertical y salud 200. Chrome de producción confirmó redes debajo de accesos, header sticky y `::after` sin contenido. El commit documental que contiene este cierre registra la verificación posterior. No se guardaron datos de prueba en producción.
 
+## Corrección de alineación
+
+Por petición posterior, las redes de escritorio se alinean ahora debajo de **«Cómo funciona»**, en lugar de debajo de los botones de acceso. Navegación y redes comparten la segunda columna del grid; la marca conserva su área clicable ajustada. No cambia el contenido, los enlaces configurados, el footer ni el menú móvil.
+
+**103/103 pruebas**, TypeScript, ESLint, build y dry run correctos. Chrome local confirmó diferencia horizontal de **0 px** entre el primer enlace de navegación y el primer icono, tanto en escritorio normal como en el límite de 1181 px. También se revisaron viewports solicitados de 1180 y 390 px: sin fila duplicada ni desbordamiento horizontal. Se restauró el tamaño normal del navegador. [Captura de la alineación, demo local](proofs/header-rrss-como-funciona-20261020.jpg). Publicación pendiente de verificación en este commit de implementación; el cierre siguiente registrará su versión.
+
 ## Siguiente revisión
 
 Comprobar la nueva miniatura al volver a compartir un enlace, porque WhatsApp/Facebook/LinkedIn pueden conservar caché propia. Revisar la pantalla de inicio en un iPhone físico y los tonos en distintos monitores. Los pendientes funcionales y jurídicos anteriores siguen en [el informe del 19 de octubre](SOPORTE-CORREOS-FORMULARIOS-2026-10-19.md); este cambio de identidad no los da por resueltos.
