@@ -60,6 +60,16 @@ Desplegado el **20 de octubre, aproximadamente a las 19:30 de Santiago**. Worker
 
 Chrome confirmó la figura SVG cargada en la portada oficial y se dejó esa pestaña abierta para revisar. No se pudo guardar captura de producción por un fallo del mecanismo de captura; las evidencias adjuntas son de la misma versión en demo local, claramente identificadas. Los tres SVG de web coinciden por SHA-256 con el ZIP original. El logo previo y los residuos eliminados son recuperables en el historial Git, sin tocar los originales del propietario.
 
+## Ajuste posterior del header
+
+Petición posterior del propietario: RRSS debajo de la primera fila del header en PC y retirar la raya del inicio. Se separó un bloque de redes de escritorio del bloque de accesos, reutilizando los mismos enlaces configurados en administración. Desde 1181 px aparece debajo de la navegación/accesos, alineado a la derecha; el logo conserva sus proporciones y el conjunto sigue sticky. En tablet/móvil se mantiene la distribución anterior y las redes del menú. Footer y datos de enlaces no cambian.
+
+Se retiraron ambas reglas `.hero::after` que generaban el trazo vertical. Se conservó el degradado `::before`. Las anclas del inicio tienen margen superior de 136 px en escritorio para no quedar tapadas por el header (aproximadamente 106 px en la revisión).
+
+Validación: **103/103 pruebas**, TypeScript, ESLint, build de 35 rutas y despliegue en seco correctos. Chrome local: escritorio de 1521 px útiles y viewports solicitados de 1181, 1180, 768, 641, 640, 390 y 320 px, todos sin desbordamiento. Solo escritorio muestra la nueva fila; móvil conserva un grupo dentro del menú. Se comprobó apertura del menú y cierre al navegar a una sección. El pseudo-elemento eliminado devuelve `content: none`. [Captura del ajuste, demo local](proofs/header-rrss-desktop-20261020.jpg).
+
+No se modifican APIs, SEO editorial, autenticación, base de datos, recursos de marca ni planes; Chile3X queda fuera del cambio. Publicación y comprobaciones finales: pendientes de registrar tras desplegar.
+
 ## Siguiente revisión
 
 Comprobar la nueva miniatura al volver a compartir un enlace, porque WhatsApp/Facebook/LinkedIn pueden conservar caché propia. Revisar la pantalla de inicio en un iPhone físico y los tonos en distintos monitores. Los pendientes funcionales y jurídicos anteriores siguen en [el informe del 19 de octubre](SOPORTE-CORREOS-FORMULARIOS-2026-10-19.md); este cambio de identidad no los da por resueltos.

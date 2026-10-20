@@ -66,7 +66,6 @@ nav a:hover, .text-link:hover { color: var(--gold-light); }
   background: var(--canvas);
 }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(7, 10, 12, .84); }
-.hero::after { content: ""; position: absolute; width: 1px; height: 100%; background: rgba(216, 189, 131, .45); left: max(24px, calc((100vw - 1240px) / 2)); top: 0; z-index: -1; }
 .hero-copy, .hero-panel { position: relative; z-index: 1; }
 .eyebrow { color: var(--gold); font-weight: 800; font-size: 12px; letter-spacing: 0; text-transform: uppercase; margin: 0 0 16px; }
 .hero h1 { font-family: var(--font-display); font-size: 58px; max-width: 650px; line-height: 1.04; margin: 0; letter-spacing: 0; }
@@ -374,7 +373,6 @@ body { font-size: 16px; line-height: 1.55; }
 .site-header nav a { font-size: 13px; }
 .hero { background: radial-gradient(ellipse at 75% 15%, #474233 0%, transparent 48%), linear-gradient(130deg, #111617 0%, #242923 62%, #111617 100%); }
 .hero::before { background: linear-gradient(90deg, rgba(12, 16, 17, .12), transparent 65%); }
-.hero::after { background: rgba(216, 189, 131, .35); }
 .hero h1 { font-size: clamp(51px, 6.2vw, 84px); line-height: .99; letter-spacing: -.045em; }
 .hero-description { font-size: 17px; color: var(--muted); }
 .hero-points li { color: var(--muted); }
@@ -540,6 +538,7 @@ body { font-size: 16px; line-height: 1.55; }
 .public-site-header .public-main-nav { min-width: 0; margin-left: auto; gap: clamp(11px, 1.6vw, 25px); }
 .public-site-header .public-main-nav a { white-space: nowrap; }
 .public-header-right { display: flex; align-items: center; gap: 15px; flex: 0 0 auto; }
+.public-header-social-row { display: none; }
 .public-site-header .header-actions { gap: 9px; flex-wrap: nowrap; }
 .public-site-header .client-login-link { display: inline-flex; align-items: center; min-height: 41px; padding: 8px 11px; border: 1px solid rgba(227, 204, 160, .55); border-radius: 999px; color: var(--ink); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .public-site-header .client-login-link:hover { color: var(--gold-light); border-color: var(--gold-light); text-decoration: none; }
@@ -855,6 +854,17 @@ input::placeholder, textarea::placeholder { font-weight: 400; opacity: 1; }
 .hero-brand-visual { min-width: 0; position: relative; z-index: 1; display: grid; place-items: center; align-self: center; }
 .hero-brand-visual .brand-logo--vertical { width: min(100%, 260px); }
 .recovery-code { color: var(--paper-ink); }
+
+/* Desktop keeps navigation/actions above the social links, inside one sticky header. */
+@media (min-width: 1181px) {
+  .site-header.public-site-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 7px 24px; }
+  .public-site-header > .brand { grid-column: 1; grid-row: 1 / 3; }
+  .public-site-header .public-main-nav { grid-column: 2; grid-row: 1; }
+  .public-site-header .public-header-right { grid-column: 3; grid-row: 1; }
+  .public-header-social-row { display: flex; grid-column: 2 / -1; grid-row: 2; justify-content: flex-end; }
+  .public-header-social-row .site-social-links-header { flex-wrap: wrap; justify-content: flex-end; }
+  #como-funciona, #casos, #confianza { scroll-margin-top: 136px; }
+}
 
 @media (max-width: 980px) {
   .portal-logo .brand-logo--signature { width: 121px; }

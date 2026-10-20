@@ -10,6 +10,8 @@ Identidad oficial incorporada el **20 de octubre**: negro tinta `#111617` / oro 
 
 Versión actual desplegada: **`264759f3-5b9c-45c3-a387-c342410b4515`**, código [`d357fcc`](https://github.com/gprecabarren/jurisconecta/commit/d357fcc). Las 22 comprobaciones HTTP posteriores no presentaron fallos; los 13 assets probados coinciden exactamente con la entrega preparada. Sin migraciones ni sobrescritura de contenido real. Los registros de versiones siguientes en este README son históricos y conservan su fecha.
 
+Ajuste posterior del header: las RRSS ocupan una segunda fila en escritorio (desde 1181 px), con logo, navegación y accesos arriba; el header sigue fijo y el móvil mantiene sus redes dentro del menú. Se quitaron las dos reglas que dibujaban la raya vertical del inicio y se dejó margen para anclas bajo el nuevo header. **103/103 pruebas**, TypeScript, ESLint, build y dry run correctos; siete anchos de prueba sin overflow. [Evidencia y cierre](docs/IDENTIDAD-OFICIAL-2026-10-20.md#ajuste-posterior-del-header).
+
 ## Arquitectura y límites de costo
 
 - Next.js 16 exporta páginas estáticas; el Worker Cloudflare **`jurisconecta`** sirve archivos, protege páginas por rol y despacha `functions/api`. La base exclusiva es D1 **`jurisconecta-db`**. La zona y dominio son exclusivamente `jurisconecta.cl` y `www.jurisconecta.cl`.

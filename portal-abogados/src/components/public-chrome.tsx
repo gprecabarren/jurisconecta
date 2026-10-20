@@ -36,7 +36,7 @@ export function PublicHeader({ socialLinks = [], contactEmail = "", home = false
   return <header className="site-header public-site-header">
     <Link className="brand" href="/" aria-label="JurisConecta inicio"><BrandLogo decorative /></Link>
     <nav className="public-main-nav" aria-label="Navegación principal"><a href={anchor("como-funciona")}>Cómo funciona</a><a href={anchor("casos")}>Casos</a><a href={anchor("confianza")}>Por qué elegirnos</a><a href="/noticias/">Noticias</a><Link href="/soporte">Soporte</Link></nav>
-    <div className="public-header-right"><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="header" /><div className="header-actions"><Link className="client-login-link" href="/ingresar">Iniciar sesión</Link><Link className="lawyer-link" href="/registro">Registrarse <ArrowRight size={15} aria-hidden="true" /></Link></div></div>
+    <div className="public-header-right"><div className="header-actions"><Link className="client-login-link" href="/ingresar">Iniciar sesión</Link><Link className="lawyer-link" href="/registro">Registrarse <ArrowRight size={15} aria-hidden="true" /></Link></div></div>
     <Link className="mobile-login-shortcut" href="/ingresar" aria-label="Iniciar sesión" title="Iniciar sesión"><UserRound size={21} aria-hidden="true" /></Link>
     <details className="public-mobile-menu" data-navigation-menu>
       <summary aria-label="Abrir o cerrar menú de navegación"><Menu className="menu-open-icon" size={22} aria-hidden="true" /><X className="menu-close-icon" size={22} aria-hidden="true" /><span>Menú</span></summary>
@@ -45,6 +45,7 @@ export function PublicHeader({ socialLinks = [], contactEmail = "", home = false
         <SocialLinks links={socialLinks} contactEmail={contactEmail} placement="header" />
       </div>
     </details>
+    <div className="public-header-social-row"><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="header" /></div>
   </header>;
 }
 
