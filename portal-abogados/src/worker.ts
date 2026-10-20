@@ -53,6 +53,7 @@ import { handlePublicPartners, handleAdminPartners, handlePartnerMedia } from ".
 import { onRequestGet as getCaseTypes } from "../functions/api/case-types";
 import { onRequestGet as getAdminCaseTypes, onRequestPost as createAdminCaseType, onRequestPatch as updateAdminCaseType } from "../functions/api/admin/case-types";
 import { handleIntakeDraft, handleIntakeSubmit } from "../functions/_lib/case-intake";
+import { handleAdminEmailTemplates } from "../functions/api/admin/email-templates";
 
 type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv & GoogleEnv;
 type PageMiddleware = (context: { request: Request; env: AppEnv; next: () => Promise<Response> }) => Promise<Response>;
@@ -72,6 +73,7 @@ function routePrefix(pathname: string, prefix: string) {
 
 async function dispatchApi(request: Request, env: AppEnv, pathname: string): Promise<Response> {
   const method = request.method.toUpperCase();
+  if (pathname === "/api/admin/email-templates") return ["GET", "POST", "PATCH"].includes(method) ? handleAdminEmailTemplates(request, env) : methodNotAllowed(["GET", "POST", "PATCH"]);
   if (pathname === "/api/case-types") return method === "GET" ? getCaseTypes({request,env}) : methodNotAllowed(["GET"]);
   if (pathname === "/api/admin/case-types") {
     if (method === "GET") return getAdminCaseTypes({request,env});
@@ -280,10 +282,11 @@ export default {
         }
       }
       if (routePrefix(url.pathname, "/api")) {
-        if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && request.headers.get("Origin") !== url.origin) return Response.json({ error: "Origen no autorizado." }, { status: 403 });
+        if (!["GET", "HEAD", "OPTIONS"].includes(request.method) && request.headers.get("Origin") !== url.origin) return Response.json({ error: "Origen no autorizado." }, { status: 403, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive", "X-Content-Type-Options": "nosniff" } });
         const response = await dispatchApi(request, env, url.pathname);
         response.headers.set("Cache-Control", "no-store");
         response.headers.set("X-Content-Type-Options", "nosniff");
+        response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
         return response;
       }
       if (url.pathname === "/auth/github/login") return request.method === "GET" ? githubLogin({ request, env }) : methodNotAllowed(["GET"]);
@@ -317,7 +320,7 @@ export default {
         error: error instanceof Error ? error.message : String(error),
       }));
       return routePrefix(url.pathname, "/api")
-        ? Response.json({ error: "Ocurrió un error inesperado." }, { status: 500 })
+        ? Response.json({ error: "Ocurrió un error inesperado." }, { status: 500, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive" } })
         : new Response("Ocurrió un error inesperado.", { status: 500 });
     }
   },

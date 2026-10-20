@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { TestDb } from "./test-db";
 import { CASE_TYPE_SEED } from "../shared/case-intake-seed";
-import { caseIntakeLimits, parseCaseType, validateIntakeAnswers, type CaseType } from "../shared/case-intake";
+import { caseIntakeLimits, isOfficialIntakeSource, parseCaseType, validateIntakeAnswers, type CaseType } from "../shared/case-intake";
+import { CASE_INTAKE_DETAILS, INTAKE_SOURCE_REVIEW_DATE } from "../shared/case-intake-guidance";
 import { readCaseType, readCaseTypes } from "../functions/_lib/case-types";
 import { createSession } from "../functions/_lib/github-auth";
 import { onRequestGet as publicGet } from "../functions/api/case-types";
@@ -41,6 +42,84 @@ test("schema validation bounds editable content, safe icons, fields, total quest
   assert.equal(parseCaseType(duplicate).ok, false);
   const many = structuredClone(initial); many.steps = Array.from({ length: 3 }, (_, s) => ({ id: `step-${s}`, title: "Paso local", description: "", questions: Array.from({ length: 8 }, (_, q) => ({ id: `question-${s}-${q}`, label: "Campo de prueba", type: "text" as const, required: false })) }));
   assert.equal(parseCaseType(many).ok, false);
+});
+
+test("all 78 topics have distinct realistic examples, four specific intake questions and official editable references", () => {
+  assert.equal(Object.keys(CASE_INTAKE_DETAILS).length, 78);
+  assert.equal(new Set(CASE_TYPE_SEED.map((type) => type.guidance?.example)).size, 78);
+  for (const type of CASE_TYPE_SEED) {
+    assert.ok(CASE_INTAKE_DETAILS[type.topic], type.topic);
+    assert.ok(type.guidance, type.topic);
+    assert.equal(type.guidance.consultedAt, INTAKE_SOURCE_REVIEW_DATE);
+    assert.match(type.guidance.note, /revisión jurídica humana pendiente/i);
+    assert.ok(type.guidance.example.length >= 50, type.id);
+    assert.ok(type.guidance.sources.length >= 1);
+    assert.ok(type.guidance.sources.every((source) => isOfficialIntakeSource(source.url)), type.id);
+    assert.equal(type.steps[0].questions.length, 2);
+    const specific = type.steps[1].questions.filter((question) => ["antecedente-especifico", "estado-especifico"].includes(question.id));
+    assert.equal(specific.length, 2, type.id);
+    assert.ok(specific.every((question) => question.required === false && question.options && question.options.length >= 3));
+    // Keep real requests short, bounded and optional where sensitive evidence would otherwise be exposed.
+    assert.ok(new TextEncoder().encode(JSON.stringify(type)).length < 12_000, type.id);
+    assert.equal(parseCaseType(type).ok, true, type.id);
+    assert.equal(validateIntakeAnswers(type, complete(type)).ok, true, type.id);
+  }
+  for (const topic of ["Abuso sexual y violación", "Violencia intrafamiliar", "Torturas por parte del Estado", "Violencia sexual por parte del Estado", "Acoso sexual"]) {
+    const type = CASE_TYPE_SEED.find((type) => type.topic === topic)!;
+    assert.match(type.steps[0].description, /no es un canal de emergencia/i);
+    assert.ok(type.steps.flatMap((step) => step.questions).some((question) => question.options?.includes("Prefiero revisarlo en privado")), topic);
+  }
+});
+
+test("editorial metadata cannot inject HTML, nonofficial links, credentials, invalid dates or unbounded sources", () => {
+  const type = structuredClone(CASE_TYPE_SEED[0]);
+  assert.ok(type.guidance);
+  for (const value of ["javascript:alert(1)", "http://www.bcn.cl/leychile", "https://bcn.cl.attacker.example/a", "https://bcn.cl@attacker.example/a", "https://user:pass@www.bcn.cl/a", "https://www.bcn.cl:444/a", "https://example.com/a", "https://www.bcn.cl/a\n"]) {
+    assert.equal(isOfficialIntakeSource(value), false, value);
+    assert.equal(parseCaseType({ ...type, guidance: { ...type.guidance, sources: [{ title: "Fuente", url: value }] } }).ok, false, value);
+  }
+  for (const value of [{ consultedAt: "2026-02-30" }, { consultedAt: "not-a-date" }, { note: "<script>unsafe</script>" }, { example: "<img src=x>" }, { sources: [] }, { sources: Array.from({ length: 7 }, () => type.guidance!.sources[0]) }, { sources: [type.guidance.sources[0], type.guidance.sources[0]] }]) assert.equal(parseCaseType({ ...type, guidance: { ...type.guidance, ...value } }).ok, false);
+  // Schemas created before editorial metadata remain valid and keep their exact question IDs.
+  const { guidance: _guidance, ...legacy } = type; void _guidance;
+  assert.equal(parseCaseType(legacy).ok, true);
+  assert.equal("guidance" in (parseCaseType(legacy) as { type: CaseType }).type, false);
+});
+
+test("customized catalog definitions are not replaced by researched examples and explicit edits preserve CAS/version history", async () => {
+  const env = environment(), auth = await cookie(env), baseline = structuredClone(CASE_TYPE_SEED[0]);
+  const legacy: CaseType = { ...baseline, topic: "Formulario personalizado de alimentos", version: 4, steps: [{ id: "personalizada", title: "Etapa personalizada", description: "Una descripción guardada por un administrador.", questions: [{ id: "pregunta-propia", label: "Pregunta personalizada válida", type: "text", required: false }] }] };
+  delete legacy.guidance;
+  await env.DB.prepare("INSERT INTO case_type_catalog (id, schema_json, version, enabled, sort_order, updated_by) VALUES (?, ?, ?, 1, 0, 'fixture')").bind(legacy.id, JSON.stringify(legacy), legacy.version).run();
+  const before = await readCaseType(env.DB, legacy.id);
+  assert.deepEqual(before, legacy);
+  const listing = await readCaseTypes(env.DB, true);
+  assert.deepEqual(listing.find((type) => type.id === legacy.id)?.steps, legacy.steps);
+  assert.equal(listing.find((type) => type.id !== legacy.id)?.guidance?.consultedAt, INTAKE_SOURCE_REVIEW_DATE);
+  // Loading an example is a local editor action; only an authenticated explicit save changes the catalog.
+  const loaded = { ...legacy, steps: baseline.steps, guidance: baseline.guidance };
+  assert.equal((await adminPatch({ request: request("PATCH", { type: loaded, expectedVersion: 3 }, auth), env })).status, 400);
+  assert.deepEqual(await readCaseType(env.DB, legacy.id), legacy);
+  assert.equal((await adminPatch({ request: request("PATCH", { type: loaded, expectedVersion: 4 }, auth), env })).status, 200);
+  const saved = await readCaseType(env.DB, legacy.id);
+  assert.equal(saved?.version, 5);
+  assert.equal(saved?.topic, legacy.topic);
+  assert.deepEqual(saved?.guidance, baseline.guidance);
+  assert.deepEqual(before?.steps, legacy.steps);
+});
+
+test("explicit removal and reordering of sections and questions retains exact order and rejects empty sections", async () => {
+  const env = environment(), auth = await cookie(env), original = structuredClone(CASE_TYPE_SEED[0]);
+  const draft = structuredClone(original);
+  draft.steps = [draft.steps[1], draft.steps[0]];
+  draft.steps[0].questions = [draft.steps[0].questions[2], draft.steps[0].questions[0]];
+  assert.equal((await adminPatch({ request: request("PATCH", { type: draft, expectedVersion: 1 }, auth), env })).status, 200);
+  const saved = await readCaseType(env.DB, original.id);
+  assert.deepEqual(saved?.steps.map((step) => step.id), ["antecedentes", "situacion"]);
+  assert.deepEqual(saved?.steps[0].questions.map((question) => question.id), ["documentos", "antecedente-especifico"]);
+  assert.deepEqual(CASE_TYPE_SEED[0], original);
+  const invalid = structuredClone(saved!); invalid.steps[0].questions = [];
+  assert.equal((await adminPatch({ request: request("PATCH", { type: invalid, expectedVersion: 2 }, auth), env })).status, 400);
+  assert.deepEqual((await readCaseType(env.DB, original.id))?.steps, saved?.steps);
 });
 
 test("answer validation preserves draft progress but rejects unknown keys, HTML, forged options, invalid dates and numbers", () => {

@@ -165,7 +165,7 @@ test("legacy owner cookies retain access only while registry and session remain 
   // Binding/fetch responses may have immutable headers. Clone before adding privacy headers.
   const protectedAsset = await protectAdmin({ request: request("/admin/", "GET", undefined, cookie), env, next: async () => Response.redirect("https://jurisconecta.cl/admin/", 308) });
   assert.equal(protectedAsset.headers.get("Cache-Control"), "no-store");
-  assert.equal(protectedAsset.headers.get("X-Robots-Tag"), "noindex, nofollow");
+  assert.equal(protectedAsset.headers.get("X-Robots-Tag"), "noindex, nofollow, noarchive");
   await env.DB.prepare("UPDATE github_administrators SET github_login = 'renamed-owner' WHERE github_id = 58262409").run();
   assert.equal((await readSession(request("/admin/", "GET", undefined, cookie), env))?.login, "renamed-owner");
   await env.DB.prepare("UPDATE admin_sessions SET revoked_at = CURRENT_TIMESTAMP WHERE id = ?").bind(sessionId).run();

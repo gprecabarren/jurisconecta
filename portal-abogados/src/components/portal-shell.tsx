@@ -3,9 +3,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, CircleHelp, ContactRound, Eye, FileCheck2, LayoutDashboard, LogOut, Menu, Scale, Settings2, ShieldCheck, Star, UsersRound, WalletCards, X } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CircleHelp, ContactRound, Eye, FileCheck2, LayoutDashboard, LogOut, Mail, Menu, Scale, Settings2, ShieldCheck, Star, UsersRound, WalletCards, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { AdminSupportAlerts } from "./admin-support-alerts";
 
 const lawyerItems = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
@@ -68,6 +69,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
         { href: "/admin#vista-previa", label: "Vista previa", icon: Eye },
         { href: "/admin#soporte", label: "Centro de ayuda", icon: CircleHelp },
         { href: "/admin#tickets", label: "Tickets", icon: CircleHelp },
+        { href: "/admin/correos", label: "Correos y plantillas", icon: Mail },
         { href: "/admin#recuperacion", label: "Recuperación", icon: Settings2 },
         { href: "/admin#bitacora", label: "Bitácora", icon: FileCheck2 },
         { href: "/admin#sesiones", label: "Mis dispositivos", icon: Settings2 },
@@ -109,7 +111,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     <section className="portal-workspace">
       <header className="portal-topbar">
         {!admin ? <div className="plan-summary"><span>Plan: <b>{lawyer ? `${lawyer.plan_credit_balance}/${lawyer.plan_monthly_credits}` : "—"}</b></span><span>Reserva: <b>{lawyer?.reserve_credit_balance ?? "—"}</b></span><span>Total: <b>{lawyer?.credit_balance ?? "—"}</b></span><span>Renovación: <b>{renewal}</b></span>{lawyer && <span className="billing-mode-label">{lawyer.billing_mode === "free" ? "Modo gratuito" : "Pago preparado · sin pasarela"}</span>}</div> : <div className="plan-summary"><span><b>JurisConecta</b> gestión interna</span><span>Acceso protegido con GitHub</span></div>}
-        <div className="portal-user"><span className="topbar-notice">{admin ? administrator ? `@${administrator.login}` : "Administrador" : lawyer ? `Plan ${lawyer.plan_code}` : "Cuenta profesional"}</span>{!admin && lawyer?.avatar_data_url ? <img className="avatar" src={lawyer.avatar_data_url} alt="Foto de perfil" /> : <span className="avatar">{admin ? "AD" : initials}</span>}</div>
+        <div className="portal-user">{admin && <AdminSupportAlerts />}<span className="topbar-notice">{admin ? administrator ? `@${administrator.login}` : "Administrador" : lawyer ? `Plan ${lawyer.plan_code}` : "Cuenta profesional"}</span>{!admin && lawyer?.avatar_data_url ? <img className="avatar" src={lawyer.avatar_data_url} alt="Foto de perfil" /> : <span className="avatar">{admin ? "AD" : initials}</span>}</div>
       </header>
       <main className="portal-main">{children}</main>
     </section>

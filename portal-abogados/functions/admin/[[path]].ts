@@ -8,8 +8,8 @@ export const onRequest = async ({ request, env, next }: Context) => {
     const assetResponse = await next();
     const response = new Response(assetResponse.body, assetResponse);
     response.headers.set("Cache-Control", "no-store");
-    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
     return response;
   }
-  return Response.redirect(new URL("/auth/github/login", request.url), 302);
+  return new Response(null, { status: 302, headers: { Location: new URL("/auth/github/login", request.url).toString(), "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow, noarchive" } });
 };

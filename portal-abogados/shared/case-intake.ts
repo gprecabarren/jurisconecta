@@ -3,7 +3,9 @@ export const CASE_TYPE_ICONS = ["Scale", "HeartHandshake", "Landmark", "Briefcas
 export type CaseTypeIcon = typeof CASE_TYPE_ICONS[number];
 export type IntakeQuestion = { id: string; label: string; type: "text" | "textarea" | "select" | "date" | "number"; required: boolean; options?: string[]; maxLength?: number };
 export type IntakeStep = { id: string; title: string; description: string; questions: IntakeQuestion[] };
-export type CaseType = { id: string; category: string; topic: string; description: string; icon: string; enabled: boolean; sortOrder: number; version: number; steps: IntakeStep[] };
+export type IntakeSource = { title: string; url: string };
+export type IntakeGuidance = { consultedAt: string; note: string; example: string; sources: IntakeSource[] };
+export type CaseType = { id: string; category: string; topic: string; description: string; icon: string; enabled: boolean; sortOrder: number; version: number; steps: IntakeStep[]; guidance?: IntakeGuidance };
 export type IntakeIssue = { field: string; message: string };
 export type IntakeAnswersResult = { ok: true; answers: Record<string, string> } | { ok: false; issues: IntakeIssue[] };
 export type CaseTypeResult = { ok: true; type: CaseType } | { ok: false; issues: IntakeIssue[] };
@@ -14,6 +16,11 @@ function record(value: unknown): value is Record<string, unknown> { return !!val
 function safeText(value: unknown, min: number, max: number): value is string { return typeof value === "string" && value.trim().length >= min && value.length <= max && !/[<>\u0000-\u0008\u000B\u000C\u000E-\u001F]/u.test(value); }
 function id(value: unknown) { return typeof value === "string" && value.length <= 80 && identifier.test(value); }
 function integer(value: unknown, min: number, max: number): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= min && value <= max; }
+const officialSourceDomains = ["gob.cl", "gov.cl", "bcn.cl", "pjud.cl", "dt.gob.cl", "sii.cl", "cmfchile.cl", "sernac.cl", "suseso.cl", "superir.gob.cl", "superdesalud.gob.cl", "serviciomigraciones.cl", "inapi.cl", "aduana.cl", "indh.cl", "fiscaliadechile.cl", "tta.cl"];
+export function isOfficialIntakeSource(value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 700 || /[\s<>\u0000-\u001f]/u.test(value)) return false;
+  try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password && !url.port && officialSourceDomains.some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`)); } catch { return false; }
+}
 
 export function parseCaseType(input: unknown): CaseTypeResult {
   const issues: IntakeIssue[] = [];
@@ -55,8 +62,27 @@ export function parseCaseType(input: unknown): CaseTypeResult {
     steps.push({ id: String(step.id), title: String(step.title).trim(), description: String(step.description).trim(), questions });
   });
   if (questionIds.size > caseIntakeLimits.questions) error("steps", "El formulario admite un máximo de 20 preguntas.");
+  let guidance: IntakeGuidance | undefined;
+  if (input.guidance !== undefined) {
+    const value = input.guidance;
+    if (!record(value)) error("guidance", "Las referencias editoriales deben ser un objeto.");
+    else {
+      const date = value.consultedAt;
+      if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date || date < "2020-01-01" || date > "2100-12-31") error("guidance.consultedAt", "Indica una fecha de consulta válida.");
+      if (!safeText(value.note, 10, 600)) error("guidance.note", "Escribe una nota editorial sin HTML de 10 a 600 caracteres.");
+      if (!safeText(value.example, 10, 600)) error("guidance.example", "Escribe un ejemplo ficticio sin HTML de 10 a 600 caracteres.");
+      const sources: IntakeSource[] = [];
+      if (!Array.isArray(value.sources) || value.sources.length < 1 || value.sources.length > 6) error("guidance.sources", "Incluye entre 1 y 6 fuentes oficiales.");
+      else value.sources.forEach((source: unknown, index: number) => {
+        if (!record(source) || !safeText(source.title, 3, 160) || !isOfficialIntakeSource(source.url)) error(`guidance.sources.${index}`, "Usa un título de 3 a 160 caracteres y un enlace HTTPS de una fuente oficial chilena.");
+        else sources.push({ title: source.title.trim(), url: source.url });
+      });
+      if (new Set(sources.map((source) => source.url)).size !== sources.length) error("guidance.sources", "No repitas una misma fuente.");
+      guidance = { consultedAt: String(date), note: String(value.note).trim(), example: String(value.example).trim(), sources };
+    }
+  }
   if (issues.length) return { ok: false, issues };
-  return { ok: true, type: { id: String(input.id), category: String(input.category).trim(), topic: String(input.topic).trim(), description: String(input.description).trim(), icon: String(input.icon), enabled: input.enabled === true, sortOrder: Number(input.sortOrder), version: Number(input.version), steps } };
+  return { ok: true, type: { id: String(input.id), category: String(input.category).trim(), topic: String(input.topic).trim(), description: String(input.description).trim(), icon: String(input.icon), enabled: input.enabled === true, sortOrder: Number(input.sortOrder), version: Number(input.version), steps, ...(guidance ? { guidance } : {}) } };
 }
 
 export function validateIntakeAnswers(caseType: CaseType, input: unknown, partial = false): IntakeAnswersResult {
