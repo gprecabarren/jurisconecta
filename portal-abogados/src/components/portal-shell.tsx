@@ -3,10 +3,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BriefcaseBusiness, CircleHelp, ContactRound, Eye, FileCheck2, LayoutDashboard, LogOut, Mail, Menu, Scale, Settings2, ShieldCheck, Star, UsersRound, WalletCards, X } from "lucide-react";
+import { BarChart3, BriefcaseBusiness, CircleHelp, ContactRound, Eye, FileCheck2, LayoutDashboard, LogOut, Mail, Menu, Settings2, ShieldCheck, Star, UsersRound, WalletCards, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { AdminSupportAlerts } from "./admin-support-alerts";
+import { BrandLogo } from "./brand-logo";
 
 const lawyerItems = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
@@ -80,7 +81,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
 
   return <div className="portal-shell">
     <aside className="portal-sidebar" onKeyDown={(event) => { if (event.key === "Escape") { setMenuOpen(false); document.getElementById("portal-menu-toggle")?.focus(); } }}>
-      <Link className="portal-logo" href="/"><span><Scale size={22} /></span>Juris<strong>Conecta</strong></Link>
+      <Link className="portal-logo" href="/" aria-label="JurisConecta inicio"><BrandLogo decorative /></Link>
       <button id="portal-menu-toggle" className="portal-menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="portal-navigation" onClick={() => setMenuOpen((open) => !open)}>{menuOpen ? <X size={21} /> : <Menu size={21} />}<span>{menuOpen ? "Cerrar" : "Menú"}</span></button>
       <p className="portal-caption">{admin ? "Administración" : "Área profesional"}</p>
       <div id="portal-navigation" className={`portal-navigation${menuOpen ? " is-open" : ""}`}>

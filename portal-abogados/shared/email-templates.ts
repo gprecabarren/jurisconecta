@@ -8,9 +8,23 @@ export type EmailTemplatePreview = { subject: string; html: string; text: string
 export const emailTemplateLimits = { html: 40_000, text: 16_000, subject: 180, senderName: 80, replyTo: 254 };
 export const EMAIL_SENDER_ADDRESS = "jurisconecta.site@gmail.com";
 export const EMAIL_SITE_ORIGIN = "https://jurisconecta.cl";
+/** Fixed first-party artwork: no per-recipient URL, query string or tracking identifier. */
+export const EMAIL_LOGO_URL = `${EMAIL_SITE_ORIGIN}/brand/logo-email.png`;
+export const EMAIL_LOGO_ATTRIBUTES = {
+  src: EMAIL_LOGO_URL,
+  alt: "JurisConecta",
+  width: "335",
+  height: "100",
+  border: "0",
+  style: "display:block;width:100%;max-width:335px;height:auto;margin:0 auto;border-width:0;border-style:none",
+} as const;
+export function emailBrandMasthead(): string {
+  const attributes = Object.entries(EMAIL_LOGO_ATTRIBUTES).map(([key, value]) => `${key}="${value}"`).join(" ");
+  return `<div style="background-color:#111617;padding:24px 32px">` + `<img ${attributes}>` + `</div>`;
+}
 const commonVariables = ["recipient_name", "site_name", "action_url", "support_email", "current_year"];
 function definition(id: string, title: string, description: string, audience: EmailAudience, subject: string, message: string, button: string, variables: string[] = []): EmailTemplateDefinition {
-  const html = `<div style="background-color:#f5f5f1;padding:24px"><table role="presentation" style="width:100%;max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:20px"><tbody><tr><td style="padding:32px;font-family:Arial,sans-serif;color:#173342"><p style="color:#92713f;font-size:14px">{{site_name}}</p><h1 style="font-size:26px;line-height:1.3">${title}</h1><p>Hola {{recipient_name}},</p><p style="font-size:16px;line-height:1.7">${message}</p><p style="margin:28px 0"><a href="{{action_url}}" style="background-color:#173342;color:#ffffff;padding:14px 22px;border-radius:28px;text-decoration:none;display:inline-block">${button}</a></p><p style="font-size:13px;line-height:1.6;color:#52626c">Por seguridad, revisa los detalles dentro de tu cuenta. No respondas con documentos ni información sensible de tu caso.</p><hr><p style="font-size:12px;color:#52626c">¿Necesitas ayuda? {{support_email}} · © {{current_year}} {{site_name}}</p></td></tr></tbody></table></div>`;
+  const html = `<div style="background-color:#111617;padding:24px"><table role="presentation" style="width:100%;max-width:620px;margin:0 auto;background-color:#111617;border-radius:20px"><tbody><tr><td>${emailBrandMasthead()}</td></tr><tr><td style="padding:32px;font-family:Arial,sans-serif;color:#e4ded0"><h1 style="font-size:26px;line-height:1.3;color:#d8bd83">${title}</h1><p>Hola {{recipient_name}},</p><p style="font-size:16px;line-height:1.7">${message}</p><p style="margin:28px 0"><a href="{{action_url}}" style="background-color:#d8bd83;color:#111617;padding:14px 22px;border-radius:28px;text-decoration:none;display:inline-block">${button}</a></p><p style="font-size:13px;line-height:1.6;color:#e4ded0">Por seguridad, revisa los detalles dentro de tu cuenta. No respondas con documentos ni información sensible de tu caso.</p><hr><p style="font-size:12px;color:#e4ded0">¿Necesitas ayuda? {{support_email}} · © {{current_year}} {{site_name}}</p></td></tr></tbody></table></div>`;
   return { id, title, description, audience, variables: [...commonVariables, ...variables], example: { senderName: "JurisConecta", replyTo: EMAIL_SENDER_ADDRESS, subject, html, text: `Hola {{recipient_name}},\n\n${message}\n\n${button}: {{action_url}}\n\nPor seguridad, revisa los detalles dentro de tu cuenta. No respondas con documentos ni información sensible.\nAyuda: {{support_email}}\n© {{current_year}} {{site_name}}` } };
 }
 export const EMAIL_TEMPLATE_DEFINITIONS: EmailTemplateDefinition[] = [

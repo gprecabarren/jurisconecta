@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, Camera, Mail, Menu, MessageCircle, Music2, Play, Scale, Send, UserRound, X } from "lucide-react";
+import { ArrowRight, Camera, Mail, Menu, MessageCircle, Music2, Play, Send, UserRound, X } from "lucide-react";
 import type { SocialLink, SocialPlatform } from "../../shared/social-links";
 import { socialPlatformLabels } from "../../shared/social-links";
+import { BrandLogo } from "./brand-logo";
 
 function SocialIcon({ platform }: { platform: SocialPlatform }) {
   switch (platform) {
@@ -33,7 +34,7 @@ export function SocialLinks({ links, contactEmail = "", placement }: { links: So
 export function PublicHeader({ socialLinks = [], contactEmail = "", home = false }: { socialLinks?: SocialLink[]; contactEmail?: string; home?: boolean }) {
   const anchor = (id: string) => home ? `#${id}` : `/#${id}`;
   return <header className="site-header public-site-header">
-    <Link className="brand" href="/" aria-label="JurisConecta inicio"><span className="brand-mark"><Scale size={22} strokeWidth={2.6} /></span><span>Juris<span>Conecta</span></span></Link>
+    <Link className="brand" href="/" aria-label="JurisConecta inicio"><BrandLogo decorative /></Link>
     <nav className="public-main-nav" aria-label="Navegación principal"><a href={anchor("como-funciona")}>Cómo funciona</a><a href={anchor("casos")}>Casos</a><a href={anchor("confianza")}>Por qué elegirnos</a><a href="/noticias/">Noticias</a><Link href="/soporte">Soporte</Link></nav>
     <div className="public-header-right"><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="header" /><div className="header-actions"><Link className="client-login-link" href="/ingresar">Iniciar sesión</Link><Link className="lawyer-link" href="/registro">Registrarse <ArrowRight size={15} aria-hidden="true" /></Link></div></div>
     <Link className="mobile-login-shortcut" href="/ingresar" aria-label="Iniciar sesión" title="Iniciar sesión"><UserRound size={21} aria-hidden="true" /></Link>
@@ -49,7 +50,7 @@ export function PublicHeader({ socialLinks = [], contactEmail = "", home = false
 
 export function PublicFooter({ socialLinks = [], contactEmail = "" }: { socialLinks?: SocialLink[]; contactEmail?: string }) {
   return <footer className="site-footer section-shell">
-    <div className="footer-brand"><Link className="brand" href="/"><span className="brand-mark"><Scale size={20} /></span><span>Juris<span>Conecta</span></span></Link><p>Conexiones legales claras para Chile.</p><div className="footer-social"><h3>Redes y contacto</h3><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="footer" /></div></div>
+    <div className="footer-brand"><Link className="brand" href="/" aria-label="JurisConecta inicio"><BrandLogo variant="horizontal" decorative loading="lazy" /></Link><p>Conexiones legales claras para Chile.</p><div className="footer-social"><h3>Redes y contacto</h3><SocialLinks links={socialLinks} contactEmail={contactEmail} placement="footer" /></div></div>
     <div><h3>Personas</h3><Link href="/solicitar/">Publicar un caso</Link><Link href="/ingresar">Iniciar sesión</Link><Link href="/cliente">Seguir mis casos</Link></div>
     <div><h3>Profesionales</h3><Link href="/registro?tipo=abogado">Crear perfil</Link><Link href="/ingresar">Ingresar</Link></div>
     <div><h3>Soporte</h3><a href="/noticias/">Noticias y guías</a><Link href="/soporte">Ayuda y tickets</Link><Link href="/privacidad">Privacidad</Link><Link href="/terminos">Términos</Link></div>

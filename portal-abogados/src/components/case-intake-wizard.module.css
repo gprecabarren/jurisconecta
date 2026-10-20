@@ -13,7 +13,7 @@
 .progress li > span { width: 30px; height: 30px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: 12px; }
 .progress small { font-size: 11px; line-height: 1.5; }
 .progress li[aria-current="step"] { color: var(--gold); }
-.progress li[aria-current="step"] > span { border-color: var(--gold); background: rgba(212,169,108,.08); }
+.progress li[aria-current="step"] > span { border-color: var(--gold); background: rgba(216,189,131,.08); }
 .progress .complete { color: var(--muted); }
 .layout { display: grid; grid-template-columns: minmax(0,1fr) 280px; gap: 26px; align-items: start; }
 .panel { border: 1px solid var(--line); border-radius: 26px; padding: 32px; background: var(--surface); min-width: 0; }

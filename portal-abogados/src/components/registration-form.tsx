@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, BriefcaseBusiness, CircleUserRound, Scale } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, CircleUserRound } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { chileRegions } from "../../shared/chile";
 import { GoogleAccess } from "./google-access";
+import { BrandLogo } from "./brand-logo";
 
 type Role = "person" | "lawyer";
 
@@ -44,7 +45,7 @@ export function RegistrationForm({ preview = false, previewRole, onPreviewContin
   }
 
   return <main className={preview ? "auth-page preview-auth-page" : "auth-page"}>
-    <Link className="auth-brand" href="/"><span><Scale size={20} /></span>JurisConecta</Link>
+    <Link className="auth-brand" href="/" aria-label="JurisConecta inicio"><BrandLogo decorative /></Link>
     <section className="auth-card">
       <p className="eyebrow">Crear una cuenta</p><h1>Comienza de la forma que te sirva.</h1>
       <p className="auth-intro">Cada correo tiene un solo tipo de cuenta: cliente o abogado. Solo administración puede cambiarlo. Las cuentas profesionales quedan pendientes de revisión antes de recibir oportunidades.</p>

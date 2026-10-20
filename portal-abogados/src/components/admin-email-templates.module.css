@@ -29,12 +29,12 @@
 .tabs button[aria-pressed=true] { color: var(--gold); border-color: var(--gold); background: var(--surface-raised); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 6px; border: 1px solid var(--line); border-radius: 12px 12px 0 0; padding: 8px; background: var(--canvas); }
 .toolbar button { min-width: 44px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--surface-raised); display: inline-flex; justify-content: center; align-items: center; }
-.visualEditor { min-height: 380px; max-height: 700px; overflow: auto; color: #173342; background: #fff; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 12px 12px; padding: 10px; font-size: 16px; line-height: 1.7; overflow-wrap: anywhere; }
+.visualEditor { min-height: 380px; max-height: 700px; overflow: auto; color: var(--paper-ink); background: #fff; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 12px 12px; padding: 10px; font-size: 16px; line-height: 1.7; overflow-wrap: anywhere; }
 .visualEditor table { max-width: 100%; }.visualEditor a { cursor: text; }.visualEditor * { outline-offset: 2px; }
 .actions { gap: 12px; }.actions button { min-height: 44px; }.actions .text-link { display: inline-flex; align-items: center; gap: 7px; }
 .preview { border: 1px solid var(--line); border-radius: 18px; background: var(--surface-raised); padding: 18px; margin-top: 24px; min-width: 0; }
 .preview > p { overflow-wrap: anywhere; font-size: 13px; line-height: 1.8; }
-.frameWrap { overflow: auto; background: #e9ecee; border: 1px solid var(--line); border-radius: 12px; margin-top: 15px; padding: 12px; }
+.frameWrap { overflow: auto; background: var(--paper-soft); border: 1px solid var(--line); border-radius: 12px; margin-top: 15px; padding: 12px; }
 .frameWrap iframe { display: block; border: 0; margin: auto; background: white; height: 650px; max-width: 100%; border-radius: 8px; }
 .desktopFrame { width: 100%; }.mobileFrame { width: 375px; }
 .textPreview,.history { margin-top: 20px; color: var(--muted); font-size: 12px; line-height: 1.8; }

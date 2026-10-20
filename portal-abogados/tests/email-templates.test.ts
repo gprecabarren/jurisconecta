@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { EMAIL_SENDER_ADDRESS, EMAIL_TEMPLATE_DEFINITIONS, emptyEmailTemplate, type EmailTemplateContent } from "../shared/email-templates";
+import { EMAIL_SENDER_ADDRESS, EMAIL_TEMPLATE_DEFINITIONS, EMAIL_LOGO_URL, emptyEmailTemplate, type EmailTemplateContent } from "../shared/email-templates";
 import { emailPreviewDocument, parseEmailContent, preparePublishedEmail, previewEmailContent, readEmailTemplate, readEmailTemplates, readEmailTemplateVersions, renderEmailContent, safeActionUrl, sanitizeEmailHtml } from "../functions/_lib/email-templates";
 import { handleAdminEmailTemplates } from "../functions/api/admin/email-templates";
 import { createSession } from "../functions/_lib/github-auth";
@@ -24,6 +24,11 @@ test("12 realistic event examples are valid drafts, never activated and include 
     assert.equal(preview.html.includes("{{"), false);
     assert.equal(preview.text.includes("{{"), false);
     assert.match(preview.html, /Camila Ejemplo/);
+    assert.ok(definition.example.html.includes(EMAIL_LOGO_URL));
+    assert.equal((preview.html.match(/<img\b/g) || []).length, 1);
+    assert.match(preview.html, /background-color:#111617/);
+    assert.match(preview.html, /color:#d8bd83/);
+    assert.match(preview.html, /color:#e4ded0/);
   }
 });
 
@@ -33,8 +38,49 @@ test("HTML sanitation preserves safe layout and removes executable content, imag
   assert.doesNotMatch(html, /script|form|input|img|iframe|svg|onclick|onload|javascript|evil\.example|position|background-image/);
   assert.match(html, /href="https:\/\/jurisconecta.cl\/soporte\/"/);
   const doc = emailPreviewDocument('<a href="{{action_url}}">Probar</a>');
-  assert.match(doc, /default-src 'none'/); assert.match(doc, /form-action 'none'/); assert.match(doc, /img-src 'none'/);
+  assert.match(doc, /default-src 'none'/); assert.match(doc, /form-action 'none'/); assert.ok(doc.includes(`img-src ${EMAIL_LOGO_URL};`));
+  assert.match(doc, /connect-src 'none'/); assert.match(doc, /font-src 'none'/);
   assert.doesNotMatch(doc, /<script/);
+});
+
+test("only the literal official raster logo survives and all image attributes are reconstructed", () => {
+  const safe = sanitizeEmailHtml(`<img src="${EMAIL_LOGO_URL}" srcset="https://evil.example/pixel 2x" onerror="alert(1)" alt="Wrong" width="1" height="1" style="display:none;background-image:url(https://evil.example/pixel)" class="tracking" referrerpolicy="unsafe-url">`);
+  assert.equal((safe.match(/<img\b/g) || []).length, 1);
+  assert.ok(safe.includes(`src="${EMAIL_LOGO_URL}"`));
+  assert.match(safe, /alt="JurisConecta"/); assert.match(safe, /width="335"/); assert.match(safe, /height="100"/);
+  assert.match(safe, /display:block/); assert.match(safe, /max-width:335px/);
+  assert.doesNotMatch(safe, /srcset|onerror|Wrong|display:none|evil|tracking|referrerpolicy|background-image/);
+  assert.equal(sanitizeEmailHtml(safe), safe);
+  for (const src of [
+    `${EMAIL_LOGO_URL}?recipient=123`, `${EMAIL_LOGO_URL}#recipient`, `${EMAIL_LOGO_URL}/extra`,
+    "https://jurisconecta.cl.evil.example/brand/logo-email.png", "https://evil.example@jurisconecta.cl/brand/logo-email.png",
+    "http://jurisconecta.cl/brand/logo-email.png", "//jurisconecta.cl/brand/logo-email.png",
+    "https://jurisconecta.cl/brand/../brand/logo-email.png", "https://jurisconecta.cl/brand/logo-email.svg",
+    "https://jurisconecta.cl/brand/logo-email%2Epng", "https://JURISCONECTA.cl/brand/logo-email.png",
+    "data:image/png;base64,AAAA", "data:image/svg+xml,%3Csvg%20onload=alert(1)%3E", "javascript:alert(1)", "{{action_url}}",
+  ]) assert.doesNotMatch(sanitizeEmailHtml(`<img src="${src}">`), /<img\b/, src);
+  assert.doesNotMatch(sanitizeEmailHtml(`<svg onload="alert(1)"><image href="${EMAIL_LOGO_URL}"/><foreignObject><img src="${EMAIL_LOGO_URL}"></foreignObject></svg><math><img src="${EMAIL_LOGO_URL}"></math>`), /svg|image|img|math|onload/);
+});
+
+test("legacy rendering adds the official masthead without changing saved content or duplicating branded examples", async () => {
+  const legacy = content({ html: '<p>Hola {{recipient_name}}, esta es una plantilla personalizada anterior.</p>' });
+  const original = structuredClone(legacy);
+  const rendered = previewEmailContent(fixture.id, legacy);
+  assert.deepEqual(legacy, original);
+  assert.equal((rendered.html.match(/<img\b/g) || []).length, 1);
+  assert.ok(rendered.html.includes(EMAIL_LOGO_URL));
+  assert.match(rendered.html, /plantilla personalizada anterior/);
+  assert.equal((emailPreviewDocument(rendered.html).match(/<img\b/g) || []).length, 1);
+  assert.equal((emailPreviewDocument(legacy.html).match(/<img\b/g) || []).length, 1);
+  assert.equal((previewEmailContent(fixture.id, content()).html.match(/<img\b/g) || []).length, 1);
+  const env = environment(), owner = await adminCookie(env);
+  assert.equal((await call(env, owner, "save_draft", 0, { content: legacy })).status, 200);
+  assert.equal((await call(env, owner, "publish", 1, { confirmPublish: true })).status, 200);
+  const before = await env.DB.prepare("SELECT draft_json, published_json FROM email_templates WHERE id = ?").bind(fixture.id).first();
+  const prepared = await preparePublishedEmail(env.DB, fixture.id, { recipient_name: "Camila Ejemplo", site_name: "JurisConecta", support_email: EMAIL_SENDER_ADDRESS, current_year: "2026", action_url: "https://jurisconecta.cl/cliente/" });
+  assert.equal(prepared.status, "delivery_disabled");
+  assert.ok(prepared.rendered.html.includes(EMAIL_LOGO_URL));
+  assert.deepEqual(await env.DB.prepare("SELECT draft_json, published_json FROM email_templates WHERE id = ?").bind(fixture.id).first(), before);
 });
 
 test("variables are event-specific, escaped in HTML, cannot inject headers or forge links and never produce real action tokens", () => {
@@ -48,7 +94,8 @@ test("variables are event-specific, escaped in HTML, cannot inject headers or fo
   assert.throws(() => parseEmailContent(content({ subject: "", html: "", text: "" }), fixture, true), /Antes de publicar/);
   const variables = { recipient_name: '<img src=x onerror="alert(1)">', action_url: "https://jurisconecta.cl/cliente/", site_name: "JurisConecta", support_email: EMAIL_SENDER_ADDRESS, current_year: "2026" };
   const rendered = renderEmailContent(fixture.id, content(), variables);
-  assert.match(rendered.html, /&lt;img/); assert.doesNotMatch(rendered.html, /<img/);
+  assert.match(rendered.html, /&lt;img/); assert.equal((rendered.html.match(/<img\b/g) || []).length, 1);
+  assert.ok(rendered.html.includes(`src="${EMAIL_LOGO_URL}"`)); assert.doesNotMatch(rendered.html, /<img src=x/);
   assert.throws(() => renderEmailContent(fixture.id, content(), { ...variables, action_url: "https://evil.example/" }), /enlace de acción/);
   assert.throws(() => renderEmailContent(fixture.id, content({ subject: "{{recipient_name}}" }), { ...variables, recipient_name: "Ana\r\nBCC: bad" }), /asunto renderizado/);
   for (const bad of ["https://jurisconecta.cl.evil.example", "http://jurisconecta.cl", "https://x@jurisconecta.cl", "//jurisconecta.cl", "javascript:alert(1)", "https://jurisconecta.cl//external"]) assert.equal(safeActionUrl(bad), false);
@@ -119,4 +166,5 @@ test("preview is read-only and explicitly non-delivery; unpublished templates ca
   assert.equal((await call(env, auth, "publish", 1, { confirmPublish: true })).status, 200);
   const prepared = await preparePublishedEmail(env.DB, fixture.id, { recipient_name: "Camila Ejemplo", site_name: "JurisConecta", support_email: EMAIL_SENDER_ADDRESS, current_year: "2026", action_url: "https://jurisconecta.cl/cliente/" });
   assert.equal(prepared.status, "delivery_disabled"); assert.equal(prepared.rendered.deliveryEnabled, false); assert.equal(prepared.revision, 2);
+  assert.ok(prepared.rendered.html.includes(EMAIL_LOGO_URL));
 });

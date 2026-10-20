@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { CircleHelp, FilePlus2, LayoutDashboard, LogOut, Menu, Scale, Settings2, X } from "lucide-react";
+import { CircleHelp, FilePlus2, LayoutDashboard, LogOut, Menu, Settings2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
+import { BrandLogo } from "./brand-logo";
 
 type ClientUser = { full_name: string; email: string; region: string | null; commune: string | null; };
 
@@ -23,7 +24,7 @@ export function ClientShell({ children }: { children: ReactNode }) {
   async function logout() { await fetch("/api/auth/logout", { method: "POST" }); window.location.assign("/"); }
   return <div className="portal-shell client-shell">
     <aside className="portal-sidebar" onKeyDown={event => {if(event.key === "Escape"){setMenuOpen(false);document.getElementById("client-menu-toggle")?.focus();}}}>
-      <Link className="portal-logo" href="/"><span><Scale size={22} /></span>Juris<strong>Conecta</strong></Link>
+      <Link className="portal-logo" href="/" aria-label="JurisConecta inicio"><BrandLogo decorative /></Link>
       <button id="client-menu-toggle" className="portal-menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="client-navigation" onClick={()=>setMenuOpen(open=>!open)}>{menuOpen ? <X size={21}/> : <Menu size={21}/>}<span>{menuOpen ? "Cerrar" : "Menú"}</span></button>
       <p className="portal-caption">Área personal</p>
       <div id="client-navigation" className={`portal-navigation${menuOpen ? " is-open" : ""}`}>

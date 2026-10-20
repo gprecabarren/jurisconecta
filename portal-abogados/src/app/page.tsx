@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PartnersCarousel } from "@/components/partners-carousel";
 import { CaseTypeGrid } from "@/components/case-type-grid";
+import { BrandLogo } from "@/components/brand-logo";
 
 const steps = [
   { icon: FileText, title: "Cuéntanos tu caso", copy: "Selecciona una materia y responde algunas preguntas simples. Publicar es gratis; evita incluir datos sensibles en la descripción." },
@@ -37,6 +38,7 @@ export default function Home() {
           </ul>
           <Link className="primary-button" href="/#casos">Cuéntanos tu caso <ArrowRight size={18} /></Link>
         </div>
+        <div className="hero-brand-visual" data-reveal data-reveal-from="right"><BrandLogo variant="vertical" fetchPriority="high" /></div>
       </section>
 
       <PartnersCarousel />

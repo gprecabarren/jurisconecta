@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BRAND } from "../../shared/brand";
 
 export const siteUrl = "https://jurisconecta.cl";
 export const siteName = "JurisConecta";
@@ -11,8 +12,8 @@ export function publicMetadata(title: string, description: string, path: string,
     description,
     alternates: { canonical: url },
     robots: index ? { index: true, follow: true } : { index: false, follow: false },
-    openGraph: { title: `${title} | ${siteName}`, description, url, siteName, locale: "es_CL", type: "website", images: [{ url: `${siteUrl}/og-jurisconecta.png`, width: 1200, height: 630, alt: "JurisConecta: encuentra apoyo legal en Chile" }] },
-    twitter: { card: "summary_large_image", title: `${title} | ${siteName}`, description, images: [`${siteUrl}/og-jurisconecta.png`] },
+    openGraph: { title: `${title} | ${siteName}`, description, url, siteName, locale: "es_CL", type: "website", images: [{ url: `${siteUrl}${BRAND.social.src}`, width: BRAND.social.width, height: BRAND.social.height, alt: "JurisConecta: encuentra apoyo legal en Chile" }] },
+    twitter: { card: "summary_large_image", title: `${title} | ${siteName}`, description, images: [`${siteUrl}${BRAND.social.src}`] },
   };
 }
 

@@ -54,6 +54,7 @@ import { onRequestGet as getCaseTypes } from "../functions/api/case-types";
 import { onRequestGet as getAdminCaseTypes, onRequestPost as createAdminCaseType, onRequestPatch as updateAdminCaseType } from "../functions/api/admin/case-types";
 import { handleIntakeDraft, handleIntakeSubmit } from "../functions/_lib/case-intake";
 import { handleAdminEmailTemplates } from "../functions/api/admin/email-templates";
+import { officialAssetRoutes } from "../shared/brand";
 
 type AppEnv = CloudflareEnv & AuthEnv & UserAuthEnv & GoogleEnv;
 type PageMiddleware = (context: { request: Request; env: AppEnv; next: () => Promise<Response> }) => Promise<Response>;
@@ -270,7 +271,7 @@ export default {
     }
 
     try {
-      const maintenanceExempt = url.pathname === "/invitacion-admin/" || url.pathname === "/api/invitaciones-admin" || routePrefix(url.pathname, "/admin") || routePrefix(url.pathname, "/api/admin") || routePrefix(url.pathname, "/auth/github") || routePrefix(url.pathname, "/_next") || routePrefix(url.pathname, "/mantenimiento") || url.pathname === "/api/health" || url.pathname === "/icon.svg" || url.pathname === "/og-jurisconecta.png";
+      const maintenanceExempt = officialAssetRoutes.includes(url.pathname) || url.pathname === "/invitacion-admin/" || url.pathname === "/api/invitaciones-admin" || routePrefix(url.pathname, "/admin") || routePrefix(url.pathname, "/api/admin") || routePrefix(url.pathname, "/auth/github") || routePrefix(url.pathname, "/_next") || routePrefix(url.pathname, "/mantenimiento") || url.pathname === "/api/health";
       if (!maintenanceExempt) {
         const settings = await env.DB.prepare("SELECT maintenance_enabled FROM site_settings WHERE id = 1").first<{ maintenance_enabled: number }>();
         if (settings?.maintenance_enabled === 1) {

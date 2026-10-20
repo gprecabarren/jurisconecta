@@ -1,10 +1,10 @@
-.roleEditor { margin: 1.5rem 0; padding: 1rem; border: 1px solid #c4a66c66; border-radius: 18px; background: #0c2638; }
-.roleEditor h4 { margin: 0 0 .65rem; color: #f1d299; }
+.roleEditor { margin: 1.5rem 0; padding: 1rem; border: 1px solid #d8bd8366; border-radius: 18px; background: #242923; }
+.roleEditor h4 { margin: 0 0 .65rem; color: var(--gold-light); }
 .roleEditor p { line-height: 1.6; }
 .roleEditor fieldset { display: grid; gap: 1rem; padding: 0; margin: 1rem 0 0; min-width: 0; border: 0; }
 .roleEditor label { display: grid; gap: .4rem; font-weight: 400; }
-.roleEditor input:not([type="checkbox"]), .roleEditor select { width: 100%; min-width: 0; padding: .75rem; border: 1px solid #9cb2bd66; border-radius: 12px; background: #122f42; color: #f2f4ef; font: inherit; font-size: 1rem; font-weight: 400; }
-.roleEditor input[type="checkbox"] { flex: 0 0 auto; width: 1.2rem; height: 1.2rem; margin: .15rem 0 0; accent-color: #d4ad67; }
+.roleEditor input:not([type="checkbox"]), .roleEditor select { width: 100%; min-width: 0; padding: .75rem; border: 1px solid #d8bd8366; border-radius: 12px; background: #111617; color: var(--ink); font: inherit; font-size: 1rem; font-weight: 400; }
+.roleEditor input[type="checkbox"] { flex: 0 0 auto; width: 1.2rem; height: 1.2rem; margin: .15rem 0 0; accent-color: var(--gold); }
 .roleEditor label:has(input[type="checkbox"]) { display: flex; align-items: flex-start; gap: .6rem; line-height: 1.5; }
 .roleEditor button { justify-self: start; }
 .roleEditor fieldset:disabled { opacity: .65; }

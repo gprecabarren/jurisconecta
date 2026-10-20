@@ -4,7 +4,7 @@
 .card:hover { transform: translateY(-3px); border-color: var(--gold); }
 .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 .cardText { line-height: 1.45; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; padding-right: 5px; }
-.icon { display: grid; place-items: center; height: 40px; width: 40px; color: var(--gold); background: rgba(212,169,108,.09); border-radius: 12px; }
+.icon { display: grid; place-items: center; height: 40px; width: 40px; color: var(--gold); background: rgba(216,189,131,.09); border-radius: 12px; }
 .arrow { color: var(--quiet); position: absolute; top: 26px; right: 15px; }
 .more { display: flex; justify-content: center; margin-top: 26px; }
 .more span { color: var(--muted); font-size: 12px; }

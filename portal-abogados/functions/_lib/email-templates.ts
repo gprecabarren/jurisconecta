@@ -1,5 +1,5 @@
 import sanitizeHtml from "sanitize-html";
-import { EMAIL_SITE_ORIGIN, EMAIL_SENDER_ADDRESS, EMAIL_TEMPLATE_DEFINITIONS, emailDefinition, emailTemplateLimits, emptyEmailTemplate, type EmailTemplateContent, type EmailTemplateDefinition, type EmailTemplatePreview, type EmailTemplateRecord, type EmailTemplateVersion } from "../../shared/email-templates";
+import { EMAIL_SITE_ORIGIN, EMAIL_SENDER_ADDRESS, EMAIL_TEMPLATE_DEFINITIONS, EMAIL_LOGO_URL, EMAIL_LOGO_ATTRIBUTES, emailBrandMasthead, emailDefinition, emailTemplateLimits, emptyEmailTemplate, type EmailTemplateContent, type EmailTemplateDefinition, type EmailTemplatePreview, type EmailTemplateRecord, type EmailTemplateVersion } from "../../shared/email-templates";
 import type { D1Database } from "./user-auth";
 
 export class EmailTemplateError extends Error { constructor(message: string, public status = 400) { super(message); } }
@@ -15,17 +15,24 @@ const allowedStyles = { "*": {
   "text-align": [/^(left|right|center|justify)$/], "vertical-align": [/^(top|middle|bottom)$/], "text-decoration": [/^(none|underline)$/],
   "line-height": [/^[\d.]{1,5}(px|em|rem|%)?$/], display: [/^(block|inline|inline-block|table|table-cell)$/], "border-collapse": [/^(collapse|separate)$/],
 } };
-/** No forms, scripts, embedded resources, external links, tracking pixels or arbitrary CSS. */
+/** No active content or arbitrary resources. The sole image is fixed, first-party brand artwork. */
 export function sanitizeEmailHtml(value: string): string {
   return sanitizeHtml(value, {
-    allowedTags: ["div", "span", "p", "br", "strong", "b", "em", "i", "u", "h1", "h2", "h3", "h4", "blockquote", "ul", "ol", "li", "hr", "a", "table", "thead", "tbody", "tfoot", "tr", "td", "th"],
-    allowedAttributes: { "*": ["style"], table: ["role", "cellpadding", "cellspacing"], td: ["colspan", "rowspan"], th: ["colspan", "rowspan", "scope"], a: ["href", "rel"] },
+    allowedTags: ["div", "span", "p", "br", "strong", "b", "em", "i", "u", "h1", "h2", "h3", "h4", "blockquote", "ul", "ol", "li", "hr", "a", "table", "thead", "tbody", "tfoot", "tr", "td", "th", "img"],
+    allowedAttributes: { "*": ["style"], table: ["role", "cellpadding", "cellspacing"], td: ["colspan", "rowspan"], th: ["colspan", "rowspan", "scope"], a: ["href", "rel"], img: ["src", "alt", "width", "height", "border"] },
     allowedStyles, allowedSchemes: ["https"], allowProtocolRelative: false,
+    nonTextTags: ["script", "style", "textarea", "option", "svg", "math"],
+    exclusiveFilter: (frame) => frame.tag === "img" && frame.attribs.src !== EMAIL_LOGO_URL,
     transformTags: { a: (_tag, attrs): sanitizeHtml.Tag => {
       const href = attrs.href || "", safe = href === "{{action_url}}" || safeActionUrl(href);
       return { tagName: "a", attribs: { ...(safe ? { href, rel: "noopener noreferrer" } : {}), ...(attrs.style ? { style: attrs.style } : {}) } };
-    } },
+    }, img: (_tag, attrs): sanitizeHtml.Tag => ({ tagName: "img", attribs: attrs.src === EMAIL_LOGO_URL ? { ...EMAIL_LOGO_ATTRIBUTES } : {} }) },
   });
+}
+/** Rendering-only fallback keeps legacy drafts/published records intact and avoids duplicate mastheads. */
+function withEmailBrand(html: string): string {
+  const safeHtml = sanitizeEmailHtml(html);
+  return safeHtml.includes(`src="${EMAIL_LOGO_URL}"`) ? safeHtml : `${sanitizeEmailHtml(emailBrandMasthead())}${safeHtml}`;
 }
 export function safeActionUrl(value: string) {
   try { const url = new URL(value); return url.origin === EMAIL_SITE_ORIGIN && !url.username && !url.password && !/[\r\n\x00-\x1f]/.test(value) && !url.pathname.startsWith("//"); } catch { return false; }
@@ -63,7 +70,7 @@ export function renderEmailContent(id: string, raw: unknown, variables: Record<s
   });
   const subject = substitute(content.subject, false);
   if (/[\r\n\x00-\x1f\x7f]/.test(subject) || subject.length > 300) throw new EmailTemplateError("El asunto renderizado contiene datos inválidos.");
-  return { subject, html: sanitizeEmailHtml(substitute(content.html, true)), text: substitute(content.text, false), senderName: content.senderName, replyTo: content.replyTo, warnings, deliveryEnabled: false };
+  return { subject, html: withEmailBrand(substitute(content.html, true)), text: substitute(content.text, false), senderName: content.senderName, replyTo: content.replyTo, warnings, deliveryEnabled: false };
 }
 export function previewEmailContent(id: string, raw: unknown): EmailTemplatePreview {
   const definition = emailDefinition(id);
@@ -71,9 +78,9 @@ export function previewEmailContent(id: string, raw: unknown): EmailTemplatePrev
   const variables = Object.fromEntries(definition.variables.map((key) => [key, key === "action_url" ? `${EMAIL_SITE_ORIGIN}${definition.audience === "admin" ? "/admin/#tickets" : definition.audience === "lawyer" ? "/dashboard/" : "/cliente/"}` : sampleData[key]]));
   return { ...renderEmailContent(id, raw, variables), usesExampleData: true };
 }
-/** Separate-origin iframe also has sandbox="". CSP prevents all network loads and active content. */
+/** Sandboxed iframe permits only the fixed first-party logo; no JS, fonts, forms or other network loads. */
 export function emailPreviewDocument(html: string): string {
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'"><title>Vista previa ficticia de correo</title><style>body{margin:0;font-family:Arial,sans-serif;overflow-wrap:anywhere}table{max-width:100%}a{pointer-events:none}</style></head><body>${sanitizeEmailHtml(html)}</body></html>`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src ${EMAIL_LOGO_URL}; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'"><title>Vista previa ficticia de correo</title><style>body{margin:0;background-color:#111617;font-family:Arial,sans-serif;overflow-wrap:anywhere}table{max-width:100%}a{pointer-events:none}</style></head><body>${withEmailBrand(html)}</body></html>`;
 }
 type Row = { id: string; revision: number; draft_json: string; published_json: string | null; published_revision: number | null; updated_at: string; updated_by: string; published_at: string | null; published_by: string | null };
 function fromRow(row: Row): EmailTemplateRecord {
