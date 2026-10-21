@@ -74,7 +74,9 @@ No se modifican APIs, SEO editorial, autenticación, base de datos, recursos de 
 
 Por petición posterior, las redes de escritorio se alinean ahora debajo de **«Cómo funciona»**, en lugar de debajo de los botones de acceso. Navegación y redes comparten la segunda columna del grid; la marca conserva su área clicable ajustada. No cambia el contenido, los enlaces configurados, el footer ni el menú móvil.
 
-**103/103 pruebas**, TypeScript, ESLint, build y dry run correctos. Chrome local confirmó diferencia horizontal de **0 px** entre el primer enlace de navegación y el primer icono, tanto en escritorio normal como en el límite de 1181 px. También se revisaron viewports solicitados de 1180 y 390 px: sin fila duplicada ni desbordamiento horizontal. Se restauró el tamaño normal del navegador. [Captura de la alineación, demo local](proofs/header-rrss-como-funciona-20261020.jpg). Publicación pendiente de verificación en este commit de implementación; el cierre siguiente registrará su versión.
+**103/103 pruebas**, TypeScript, ESLint, build y dry run correctos. Chrome local confirmó diferencia horizontal de **0 px** entre el primer enlace de navegación y el primer icono, tanto en escritorio normal como en el límite de 1181 px. También se revisaron viewports solicitados de 1180 y 390 px: sin fila duplicada ni desbordamiento horizontal. Se restauró el tamaño normal del navegador. [Captura de la alineación, demo local](proofs/header-rrss-como-funciona-20261020.jpg).
+
+Publicado en Worker `jurisconecta`, versión **`4868fa01-ba6f-48bd-9be1-fb4adf2a1545`**, código [`8831bd2`](https://github.com/gprecabarren/jurisconecta/commit/8831bd2); startup 17 ms. Verificación final el **21 de octubre**: inicio, CSS y salud responden 200; el CSS remoto coincide exactamente con el build e incluye `grid-area:2/2` para redes y `grid-area:1/2` para navegación, ambos en la misma columna. Chrome abrió correctamente producción, pero la medición final se interrumpió por timeout; la evidencia geométrica y captura son locales. No se ejecutaron migraciones, escrituras de prueba ni cambios de servicios o configuración de Chile3X.
 
 ## Siguiente revisión
 

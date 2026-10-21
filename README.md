@@ -26,4 +26,4 @@ Publicado y verificado: Worker `264759f3-5b9c-45c3-a387-c342410b4515`, [código 
 
 Ajuste visual posterior del **20 de octubre**: redes sociales en una segunda fila del header fijo de escritorio, **alineadas debajo de «Cómo funciona»** y separadas de los accesos, manteniendo el menú móvil; se retiró la raya vertical decorativa del inicio y se ajustó el espacio de las anclas. **103 pruebas aprobadas**, sin cambios de datos ni servicios. [Detalle y evidencia](portal-abogados/docs/IDENTIDAD-OFICIAL-2026-10-20.md#corrección-de-alineación).
 
-Versión actual de este ajuste: `9e5105ff-e1f1-4c01-925e-70b80a2d7f7a`, [código `45e09f1`](https://github.com/gprecabarren/jurisconecta/commit/45e09f1). Inicio, noticias, guía, soporte, login y salud verificados; Chrome confirmó posición de RRSS y eliminación de la raya.
+Versión actual de este ajuste: `4868fa01-ba6f-48bd-9be1-fb4adf2a1545`, [código `8831bd2`](https://github.com/gprecabarren/jurisconecta/commit/8831bd2). Alineación exacta bajo «Cómo funciona» comprobada en Chrome local; el 21 de octubre, inicio/CSS/salud respondieron 200 y el CSS remoto coincidió con el build. Sin cambios de datos ni servicios nuevos.
