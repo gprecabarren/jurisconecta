@@ -33,3 +33,5 @@ Actualización del **23 de octubre**: botones y animaciones inspirados en los pr
 Publicado y verificado: Worker `87d375d1-06f5-4551-9cd5-c3b85328099a`, [código `889bee1`](https://github.com/gprecabarren/jurisconecta/commit/889bee1), **116/116 pruebas**. Seis rutas y los CSS responden 200; Chrome confirmó el nuevo estilo y espaciado.
 
 Buscador del home — **23 de octubre**: más separación bajo «Primer paso», filtro compacto sobre los 78 tipos y palabras/frases cotidianas editables desde **Casos y formularios**. Prueba local del borrador, límites y validaciones, auditoría y compatibilidad con formularios existentes; sin migraciones ni servicios nuevos. **129/129 pruebas**. [Detalle y evidencias](portal-abogados/docs/BUSCADOR-CASOS-2026-10-23.md).
+
+Publicado y verificado: Worker `6848ecfc-3e71-4502-8018-3e3aa95524df`, [código `507cd3c`](https://github.com/gprecabarren/jurisconecta/commit/507cd3c). Chrome del dominio oficial confirmó la búsqueda «golpes», resultados inmediatos y separación de 52 px; API/CSS/salud correctos. No se guardaron datos ficticios en producción.

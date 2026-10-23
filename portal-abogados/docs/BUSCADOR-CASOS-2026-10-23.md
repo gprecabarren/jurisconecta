@@ -37,4 +37,8 @@ Evidencias de **demo local con datos ficticios**, sin escrituras de prueba en pr
 
 ## Publicación
 
-Pendiente del cierre de verificación en este commit de implementación. Solo se despliega el Worker existente `jurisconecta`; no se modifica Chile3X ni ninguno de los otros proyectos. Sin pagos, migraciones, envíos de correo ni cambios masivos de formularios guardados. La actualización anterior de botones quedó publicada y documentada en [`889bee1`](https://github.com/gprecabarren/jurisconecta/commit/889bee1) / [`d713bac`](https://github.com/gprecabarren/jurisconecta/commit/d713bac).
+Publicado el **23 de octubre** en Worker `jurisconecta`, versión **`6848ecfc-3e71-4502-8018-3e3aa95524df`**, código [`507cd3c`](https://github.com/gprecabarren/jurisconecta/commit/507cd3c); startup 14 ms.
+
+Inicio, API resumida, dos CSS y salud responden 200; los CSS coinciden con el build. La API devuelve 78 tipos, con aliases iniciales de VIF, sin preguntas ni la frase ficticia usada en la prueba local. Chrome de producción confirmó «golpes» → Violencia intrafamiliar / Agresiones y riñas, resultados visibles inmediatamente, separación de 52 px en escritorio, sin overflow y sin consulta en la URL. Las capturas enlazadas son de la misma compilación en demo local.
+
+Solo se desplegó el Worker existente; no se modificó Chile3X ni ninguno de los otros proyectos. Sin pagos, migraciones, envíos de correo ni cambios masivos de formularios guardados. La prueba de persistencia fue exclusivamente local; los términos iniciales de esquemas antiguos se heredan al leer, sin reescribir D1. La actualización anterior de botones quedó publicada y documentada en [`889bee1`](https://github.com/gprecabarren/jurisconecta/commit/889bee1) / [`d713bac`](https://github.com/gprecabarren/jurisconecta/commit/d713bac).
