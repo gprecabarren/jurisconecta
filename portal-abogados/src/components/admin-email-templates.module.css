@@ -25,7 +25,7 @@
 .editor { min-width: 0; }.fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; border: 0; padding: 0; margin: 22px 0; min-width: 0; }
 .full { grid-column: 1/-1; }
 .variables,.tabs,.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.variables button,.tabs button { min-height: 44px; color: var(--muted); border: 1px solid var(--line); border-radius: 12px; background: var(--canvas); padding: 8px 12px; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
+.variables button,.tabs button { min-height: 44px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; background: var(--canvas); padding: 8px 14px; display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
 .tabs button[aria-pressed=true] { color: var(--gold); border-color: var(--gold); background: var(--surface-raised); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 6px; border: 1px solid var(--line); border-radius: 12px 12px 0 0; padding: 8px; background: var(--canvas); }
 .toolbar button { min-width: 44px; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--surface-raised); display: inline-flex; justify-content: center; align-items: center; }
@@ -42,5 +42,14 @@
 .textPreview pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; background: var(--canvas); border-radius: 12px; padding: 15px; }
 .history ol { padding: 0; list-style: none; }.history li { border-top: 1px solid var(--line); padding: 14px 0; display: flex; align-items: start; justify-content: space-between; gap: 15px; flex-wrap: wrap; }.history small { display: block; color: var(--quiet); }.history button { min-height: 44px; text-align: left; }
 .section button:focus-visible,.section summary:focus-visible,.section input:focus-visible,.section textarea:focus-visible,.section select:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.list button, .variables button, .tabs button, .toolbar button { transition: background-color var(--motion-fast, 180ms) ease, border-color var(--motion-fast, 180ms) ease, color var(--motion-fast, 180ms) ease; }
+.list button:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .variables button:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .tabs button:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .toolbar button:where(:disabled, [aria-disabled="true"], fieldset:disabled *) { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  .list button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .variables button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .tabs button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .toolbar button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { border-color: var(--gold); }
+  .toolbar button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { color: var(--gold-light); background: var(--surface); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .list button, .variables button, .tabs button, .toolbar button { transition: none; animation: none; transform: none; }
+}
 @media (max-width: 1100px) { .layout { grid-template-columns: 210px minmax(0,1fr); gap: 18px; }.fields { grid-template-columns: minmax(0,1fr); }.full { grid-column: auto; } }
 @media (max-width: 740px) { .layout { grid-template-columns: minmax(0,1fr); }.listPanel { position: static; }.list { max-height: 240px; }.preview { padding: 12px; }.frameWrap { padding: 5px; }.actions { align-items: stretch; }.actions > button { width: 100%; justify-content: center; }.badge { font-size: 11px; } }

@@ -25,7 +25,12 @@
 .contactFields input,.contactFields select { width: 100%; min-width: 0; background: var(--canvas); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; min-height: 48px; padding: 12px 14px; font: inherit; font-size: 16px; font-weight: 400; }
 .actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 24px; margin-top: 30px; }
 .saveArea { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-top: 22px; }
-.saveArea button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--gold); font-size: 12px; min-height: 44px; padding: 5px 0; }
+.saveArea button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--gold); font-size: 12px; min-height: 44px; padding: 5px 0; text-underline-offset: 5px; transition: color var(--motion-fast, 180ms) ease; }
+.saveArea button:where(:disabled, [aria-disabled="true"], fieldset:disabled *) { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  .saveArea button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { color: var(--gold-light); text-decoration: underline; }
+}
+@media (prefers-reduced-motion: reduce) { .saveArea button { transition: none; animation: none; transform: none; } }
 .saveArea p { color: var(--quiet); font-size: 11px; line-height: 1.5; margin: 0; }
 .notice,.error { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: var(--surface-raised); color: var(--muted); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .error { border-color: rgba(235,153,130,.45); color: #f0c1b4; margin: 18px 0; }

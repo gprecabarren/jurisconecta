@@ -6,7 +6,7 @@
 .mode strong { display: block; margin-bottom: 3px; }
 .paid { border-color: #ead7ae; background: #fff9ee; color: #735220; }
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0; padding: 5px; width: fit-content; max-width: 100%; background: var(--surface-raised); border-radius: 20px; }
-.tabs button { border: 0; padding: 12px 18px; border-radius: 15px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+.tabs button { border: 0; padding: 12px 18px; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
 .tabs button[aria-selected="true"] { color: #fff; background: var(--gold); box-shadow: 0 3px 12px #00000022; }
 .tabs button:focus-visible, .action:focus-visible, .secondary:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 22px 0; }
@@ -102,6 +102,17 @@
 .table th, .table td { border-color: var(--line); }
 .table small { color: var(--quiet); }
 .details div { border-color: var(--line); }
+.action, .secondary, .tabs button { transition: transform var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), box-shadow var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), background-color var(--motion-fast, 180ms) ease, border-color var(--motion-fast, 180ms) ease, color var(--motion-fast, 180ms) ease; }
+.action:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .secondary:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .tabs button:where(:disabled, [aria-disabled="true"], fieldset:disabled *) { transform: none; box-shadow: none; cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  .action:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .secondary:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: translateY(-2px); border-color: var(--gold); box-shadow: 0 8px 20px #0000001f; }
+  .tabs button:hover:not(:disabled):not([aria-disabled="true"]):not([aria-selected="true"]):not(fieldset:disabled *) { color: var(--gold-light); background: var(--surface); }
+  .action:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .secondary:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: translateY(0); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .action, .secondary, .tabs button { transition: none; animation: none; }
+  .action:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .secondary:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .action:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .secondary:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: none; }
+}
 @media (max-width: 1150px) {
   .overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .card { padding: 22px; }

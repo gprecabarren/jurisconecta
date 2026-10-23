@@ -35,7 +35,7 @@ export function CaseTypeGrid<T extends CaseCatalogSummary = CaseCatalogSummary>(
   const visibleTypes = !expanded && !search ? filtered.slice(0, 18) : filtered;
   return <div className={styles.catalog}>
     {expanded || !compact ? <label className={styles.search}>Buscar un tipo de caso<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Por ejemplo: divorcio, herencia, inversión…" /></label> : null}
-    <div className={styles.grid} aria-label="Tipos de casos legales">
+    <div className={styles.grid} aria-label="Tipos de casos legales" data-reveal>
       {visibleTypes.map((type) => {
         const content = <><span className={styles.icon}><CaseTypeIcon name={type.icon} /></span><span className={styles.cardText}>{type.topic}</span><ArrowRight size={14} className={styles.arrow} aria-hidden="true" /></>;
         return onChoose ? <button type="button" className={styles.card} key={type.id} disabled={!suppliedTypes} onClick={() => { const fullType = suppliedTypes?.find((item) => item.id === type.id); if (fullType) onChoose(fullType); }}>{content}</button> : <Link className={styles.card} key={type.id} href={`/solicitar/?tipo=${encodeURIComponent(type.id)}`}>{content}</Link>;

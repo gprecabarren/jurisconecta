@@ -27,7 +27,8 @@
 .stepHeader { display: flex; align-items: center; gap: 12px; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; }
 .stepHeader h4 { margin: 0; color: var(--gold); font-size: 15px; }
 .stepHeader > div { display: flex; gap: 6px; flex-wrap: wrap; }
-.stepHeader button,.questionHeading button { display: inline-flex; gap: 6px; align-items: center; min-height: 36px; padding: 6px 10px; background: var(--canvas); color: var(--muted); border: 1px solid var(--line); border-radius: 9px; font-size: 11px; }
+.stepHeader button,.questionHeading button { display: inline-flex; gap: 6px; align-items: center; justify-content: center; min-height: 36px; padding: 6px 12px; background: var(--canvas); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; font-size: 11px; }
+.stepHeader button[aria-label],.questionHeading button[aria-label] { width: 36px; padding: 0; border-radius: 50%; }
 .question { margin: 20px 0; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .questionHeading { display: flex; gap: 14px; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 12px; color: var(--quiet); }
 .questionHeading > div { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -40,12 +41,23 @@
 .source { border-top: 1px solid var(--line); padding-top: 18px; margin: 18px 0; }
 .sourceActions { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
 .sourceActions a { color: var(--gold); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; min-height: 44px; display: inline-flex; align-items: center; }
-.sourceActions button { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: var(--canvas); padding: 8px 12px; }
+.sourceActions button { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--canvas); padding: 8px 14px; }
 .actions { display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap; margin-top: 24px; }
 .preview { margin-top: 24px; }
 .empty { color: var(--muted); font-size: 14px; line-height: 1.8; padding: 35px 20px; border: 1px dashed var(--line); border-radius: 18px; }
 .error,.banner { border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; background: var(--surface-raised); color: var(--muted); line-height: 1.7; font-size: 13px; overflow-wrap: anywhere; }
 .error { color: #f0c1b4; border-color: rgba(235,153,130,.45); }
 .error ul { padding-left: 20px; }
+.list button, .stepHeader button, .questionHeading button, .sourceActions button { transition: transform var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), box-shadow var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), background-color var(--motion-fast, 180ms) ease, border-color var(--motion-fast, 180ms) ease, color var(--motion-fast, 180ms) ease; }
+.list button:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .stepHeader button:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .questionHeading button:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .sourceActions button:where(:disabled, [aria-disabled="true"], fieldset:disabled *) { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  .list button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { border-color: var(--gold); }
+  .stepHeader button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .questionHeading button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .sourceActions button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: translateY(-2px); border-color: var(--gold); box-shadow: 0 6px 16px #0000001f; }
+  .stepHeader button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .questionHeading button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .sourceActions button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: translateY(0); box-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .list button, .stepHeader button, .questionHeading button, .sourceActions button { transition: none; animation: none; }
+  .stepHeader button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .questionHeading button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .sourceActions button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .stepHeader button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .questionHeading button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .sourceActions button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: none; }
+}
 @media (max-width: 1100px) { .layout { grid-template-columns: 200px minmax(0,1fr); gap: 18px; } .fields { grid-template-columns: minmax(0,1fr); } .fields .full { grid-column: auto; } .step { padding: 16px; } .question { padding: 14px; } }
-@media (max-width: 740px) { .layout { grid-template-columns: minmax(0,1fr); } .listPanel { position: static; } .list { max-height: 230px; } .stepHeader button,.questionHeading button { min-height: 44px; } .questionHeading { align-items: flex-start; flex-direction: column; } .examplePanel { flex-wrap: wrap; } .examplePanel button { width: 100%; justify-content: center; } }
+@media (max-width: 740px) { .layout { grid-template-columns: minmax(0,1fr); } .listPanel { position: static; } .list { max-height: 230px; } .stepHeader button,.questionHeading button { min-height: 44px; } .stepHeader button[aria-label],.questionHeading button[aria-label] { width: 44px; } .questionHeading { align-items: flex-start; flex-direction: column; } .examplePanel { flex-wrap: wrap; } .examplePanel button { width: 100%; justify-content: center; } }

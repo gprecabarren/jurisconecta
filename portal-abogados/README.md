@@ -2,7 +2,9 @@
 
 ![Identidad oficial de JurisConecta](public/brand/logo-email.png)
 
-Portal chileno para conectar personas con abogados verificados. Sitio: [jurisconecta.cl](https://jurisconecta.cl). Repositorio: [gprecabarren/jurisconecta](https://github.com/gprecabarren/jurisconecta). Estado revisado el **20 de octubre de 2026**. Es un **piloto**, no un producto aprobado para captar causas reales.
+Portal chileno para conectar personas con abogados verificados. Sitio: [jurisconecta.cl](https://jurisconecta.cl). Repositorio: [gprecabarren/jurisconecta](https://github.com/gprecabarren/jurisconecta). Estado revisado el **23 de octubre de 2026**. Es un **piloto**, no un producto aprobado para captar causas reales.
+
+Actualización visual del **23 de octubre**: botones y microinteracciones inspirados en Kuchitril/Piffre, adaptados a la identidad negro/oro; más aire entre textos y tarjetas, CTA con texto adaptable, nuevos revelados progresivos y movimiento reducido en vivo. [Alcance, pruebas y publicación](docs/BOTONES-MOVIMIENTO-2026-10-23.md). Sin dependencias nuevas ni cambios de datos o servicios.
 
 Última entrega: [soporte, correos y formularios — 19 de octubre](docs/SOPORTE-CORREOS-FORMULARIOS-2026-10-19.md). Ese informe distingue implementación, pruebas locales y verificación del despliegue; incluye pendientes operativos y una ruta de pruebas sin usar datos reales.
 

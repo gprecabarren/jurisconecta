@@ -6,9 +6,8 @@
 .workspace label, .controls label, .editor label { display: grid; gap: .4rem; font-size: .875rem; font-weight: 500; min-width: 0; }
 .workspace input, .workspace select, .workspace textarea, .controls input, .controls select, .editor select, .editor textarea, .editor input { width: 100%; min-width: 0; font: inherit; font-size: 16px; font-weight: 400; border: 1px solid var(--paper-line); border-radius: 12px; padding: .75rem; color: var(--paper-ink); background: #fff; }
 .workspace textarea, .editor textarea { resize: vertical; min-height: 100px; }
-.listButton { width: 100%; min-width: 0; text-align: left; border: 1px solid var(--paper-line); border-radius: 16px; background: #fff; padding: 1rem; cursor: pointer; color: var(--paper-ink); display: grid; gap: .4rem; overflow-wrap: anywhere; }
+.listButton { width: 100%; min-width: 0; text-align: left; border: 1px solid var(--paper-line); border-radius: 16px; background: #fff; padding: 1rem; cursor: pointer; color: var(--paper-ink); display: grid; gap: .4rem; overflow-wrap: anywhere; transition: border-color var(--motion-fast, 180ms) ease, box-shadow var(--motion-fast, 180ms) ease, background-color var(--motion-fast, 180ms) ease; }
 .listButton[aria-pressed="true"] { border-color: #8d7544; box-shadow: 0 0 0 2px #8d754420; background: #ede5d5; }
-.listButton:hover { border-color: #8d7544; }
 .listButton:focus-visible, .workspace button:focus-visible, .controls button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .listButton small { color: var(--paper-muted); }
 .head, .actions { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem; justify-content: space-between; }
@@ -29,12 +28,22 @@
 .alerts strong, .alerts li, .alerts small, .alerts p { color: var(--paper-ink); }
 .alerts ul { padding-left: 1.25rem; display: grid; gap: .5rem; }
 .alerts button { font: inherit; cursor: pointer; color: var(--paper-ink); background: #fff; border-color: #8d887b; }
-.alerts button:hover { color: #1c2221; background: #e8ddc7; }
+.alerts button { transition: transform var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), box-shadow var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), background-color var(--motion-fast, 180ms) ease, border-color var(--motion-fast, 180ms) ease, color var(--motion-fast, 180ms) ease; }
+.listButton:where(:disabled, [aria-disabled="true"], fieldset:disabled *), .alerts button:where(:disabled, [aria-disabled="true"], fieldset:disabled *) { cursor: not-allowed; opacity: .55; transform: none; box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  .listButton:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { border-color: #8d7544; }
+  .alerts button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { color: #1c2221; background: #e8ddc7; border-color: #8d7544; transform: translateY(-2px); box-shadow: 0 6px 16px #11161714; }
+  .alerts button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: translateY(0); box-shadow: none; }
+}
 .muted { font-size: .85rem; color: var(--support-muted, #C6C1B6); }
 .empty { padding: 1.5rem; background: var(--paper-soft); color: var(--paper-ink); border-radius: 16px; }
 .adminScope :global(.recovery-code), .adminScope :global(.recovery-code) code { color: var(--paper-ink); }
 @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; } .list { max-height: 420px; overflow-y: auto; overscroll-behavior: contain; padding: 3px; } .history { max-height: 45vh; } }
 @media (max-width: 480px) { .controls { grid-template-columns: 1fr; } .metrics { grid-template-columns: 1fr 1fr; } .head { align-items: flex-start; } .workspace { gap: 1rem; } .actions button { width: 100%; } }
-@media (prefers-reduced-motion: reduce) { .workspace *, .controls * { scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) {
+  .workspace *, .controls * { scroll-behavior: auto !important; }
+  .listButton, .alerts button { transition: none; animation: none; }
+  .alerts button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *), .alerts button:active:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { transform: none; }
+}
 .adminScope { color: #E4DED0; --support-muted: #C6C1B6; }
 .publicScope { color: var(--ink, var(--paper-ink)); --support-muted: var(--muted, var(--paper-muted)); }

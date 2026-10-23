@@ -62,7 +62,7 @@ export function PartnersCarousel() {
   if (partners.length === 0) return null;
   const companies = partners.filter((partner) => partner.category === "company");
   const firms = partners.filter((partner) => partner.category === "law_firm");
-  return <section className={`section-shell ${styles.section}`} aria-labelledby="aliados-title" id="aliados">
+  return <section className={`section-shell ${styles.section}`} aria-labelledby="aliados-title" id="aliados" data-reveal>
     <div className="section-heading centered"><p className="eyebrow">Colaboraciones</p><h2 id="aliados-title">Experiencia que construimos juntos</h2><p>Empresas y estudios jurídicos con los que hemos trabajado.</p></div>
     {companies.length > 0 ? <PartnerRow partners={companies} category="company" title="Empresas" /> : null}
     {firms.length > 0 ? <PartnerRow partners={firms} category="law_firm" title="Estudios jurídicos" /> : null}

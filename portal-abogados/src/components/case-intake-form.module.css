@@ -20,6 +20,11 @@
 .preview > p { color: var(--muted); line-height: 1.7; }
 .previewBanner { font-size: 12px; color: var(--gold) !important; margin: 0 0 18px; }
 .stepNav { display: flex; flex-wrap: wrap; gap: 8px; }
-.stepNav button { border: 1px solid var(--line); background: var(--canvas); color: var(--muted); border-radius: 20px; padding: 8px 12px; min-height: 44px; text-align: left; }
+.stepNav button { border: 1px solid var(--line); background: var(--canvas); color: var(--muted); border-radius: 999px; padding: 8px 14px; min-height: 44px; text-align: left; transition: border-color var(--motion-fast, 180ms) ease, background-color var(--motion-fast, 180ms) ease, color var(--motion-fast, 180ms) ease; }
 .stepNav button[aria-current="step"] { color: var(--gold); border-color: var(--gold); }
+.stepNav button:where(:disabled, [aria-disabled="true"], fieldset:disabled *) { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  .stepNav button:hover:not(:disabled):not([aria-disabled="true"]):not(fieldset:disabled *) { border-color: var(--gold); background: var(--surface-raised); }
+}
+@media (prefers-reduced-motion: reduce) { .stepNav button { transition: none; animation: none; transform: none; } }
 @media (max-width: 600px) { .preview { padding: 16px; } .actions > * { justify-content: center; } .contactGrid { grid-template-columns: minmax(0,1fr); } }
