@@ -32,4 +32,8 @@ Evidencias de la misma compilación en una **demo local con datos ficticios**: [
 
 ## Publicación
 
-Pendiente de cierre en este commit de implementación. El despliegue se limita al Worker existente `jurisconecta` y sus dominios oficiales. No se ejecutan migraciones ni escrituras de prueba en producción; no se activan planes, pagos, correos, almacenamiento ni productos nuevos. Los pendientes funcionales/jurídicos del [informe del 19 de octubre](SOPORTE-CORREOS-FORMULARIOS-2026-10-19.md) siguen pendientes: este ajuste visual no los resuelve.
+Publicado el **23 de octubre** en el Worker `jurisconecta`, versión **`87d375d1-06f5-4551-9cd5-c3b85328099a`**, código [`889bee1`](https://github.com/gprecabarren/jurisconecta/commit/889bee1); startup 15 ms. Inicio, acceso, registro, noticias, soporte y salud responden 200. Los dos CSS de la portada responden 200 y coinciden exactamente con el build.
+
+Chrome de producción confirmó CTA de 54 px/radio 999 px, texto adaptable, duración de revelado de 760 ms, separación de catálogo de 36 px, hero visible y ausencia de overflow. La captura de producción agotó su tiempo de espera; las evidencias enlazadas son locales y están identificadas como tales.
+
+El despliegue se limita al Worker existente y sus dominios oficiales. No se ejecutaron migraciones ni escrituras de prueba en producción; no se activaron planes, pagos, correos, almacenamiento ni productos nuevos. Los pendientes funcionales/jurídicos del [informe del 19 de octubre](SOPORTE-CORREOS-FORMULARIOS-2026-10-19.md) siguen pendientes: este ajuste visual no los resuelve.
