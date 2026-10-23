@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, BookOpen, Eye, Plus, RotateCcw, Save, Trash2 } from
 import { useEffect, useRef, useState } from "react";
 import { CASE_TYPE_ICONS, caseIntakeLimits, isOfficialIntakeSource, parseCaseType, type CaseType, type IntakeGuidance, type IntakeQuestion } from "../../shared/case-intake";
 import { CASE_TYPE_SEED } from "../../shared/case-intake-seed";
+import { normalizeCaseSearch, searchCaseTypes } from "../../shared/case-search";
 import { professionalLegalAreas } from "../../shared/legal-catalog";
 import { CaseTypeIcon } from "./case-type-grid";
 import { IntakePreview } from "./case-intake-form";
@@ -11,6 +12,7 @@ import styles from "./admin-case-types.module.css";
 
 type AdminResponse = { types?: CaseType[]; type?: CaseType; canManage?: boolean; error?: string; issues?: { field: string; message: string }[] };
 const clone = (type: CaseType): CaseType => structuredClone(type);
+const keywordEntries = (value: string) => value.split(/[\n,]/u).map((entry) => entry.trim().replace(/\s+/gu, " ")).filter(Boolean);
 function newQuestion(): IntakeQuestion { return { id: `pregunta-${crypto.randomUUID().slice(0, 8)}`, label: "Nueva pregunta", type: "text", required: false, maxLength: 500 }; }
 function newType(): CaseType { return { id: `nuevo-caso-${crypto.randomUUID().slice(0, 8)}`, category: "Otros Casos", topic: "Nuevo tipo de caso", description: "Describe qué situaciones comprende este tipo de solicitud legal.", icon: "Scale", enabled: false, sortOrder: 999, version: 1, steps: [{ id: "antecedentes", title: "Sobre tu situación", description: "Comparte solo lo necesario, sin datos sensibles ni información que identifique a terceros.", questions: [newQuestion()] }] }; }
 
@@ -19,9 +21,17 @@ export function AdminCaseTypes() {
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [canManage, setCanManage] = useState(false);
   const [error, setError] = useState(""), [notice, setNotice] = useState(""), [issues, setIssues] = useState<string[]>([]), [search, setSearch] = useState("");
   const [preview, setPreview] = useState(true);
+  // Keep the editor text intact while typing: trimming/splitting on every key would
+  // prevent adding a new line or a comma before the next keyword.
+  const [keywordText, setKeywordText] = useState(""), [originalKeywordText, setOriginalKeywordText] = useState(""), [keywordQuery, setKeywordQuery] = useState("");
   const pending = useRef(false);
-  const dirty = draft !== null && (original === null || JSON.stringify(draft) !== JSON.stringify(original));
+  const dirty = draft !== null && (original === null || JSON.stringify(draft) !== JSON.stringify(original) || keywordText !== originalKeywordText);
   const example = draft ? CASE_TYPE_SEED.find((type) => type.id === draft.id) : undefined;
+  const keywords = keywordEntries(keywordText);
+  const keywordValidation = draft ? parseCaseType({ ...draft, searchKeywords: keywords }) : null;
+  const keywordIssues = keywordValidation && !keywordValidation.ok ? keywordValidation.issues.filter((issue) => issue.field.startsWith("searchKeywords")).map((issue) => issue.message) : [];
+  const keywordCharacters = keywords.reduce((total, keyword) => total + keyword.length, 0);
+  const keywordMatch = draft && normalizeCaseSearch(keywordQuery) ? searchCaseTypes([{ ...draft, searchKeywords: keywords }], keywordQuery).length > 0 : null;
 
   useEffect(() => {
     if (!dirty) return;
@@ -44,6 +54,8 @@ export function AdminCaseTypes() {
     if (dirty && !window.confirm("¿Descartar los cambios no guardados de este formulario?")) return;
     const value = type ? clone(type) : newType();
     setDraft(value); setOriginal(type ? clone(type) : null); setError(""); setIssues([]); setNotice("");
+    const text = value.searchKeywords?.join("\n") || "";
+    setKeywordText(text); setOriginalKeywordText(text); setKeywordQuery("");
   }
   function patch(patch: Partial<CaseType>) { setDraft((current) => current ? { ...current, ...patch } : current); }
   function patchGuidance(value: Partial<IntakeGuidance>) { setDraft((current) => current?.guidance ? { ...current, guidance: { ...current.guidance, ...value } } : current); }
@@ -69,14 +81,14 @@ export function AdminCaseTypes() {
     patchStep(stepIndex, { questions });
   }
   function loadExample() {
-    if (!draft || !example || !window.confirm("¿Cargar las etapas, preguntas y referencias del ejemplo editorial actualizado? Reemplaza solo el borrador del editor. No modifica el sitio hasta guardar; conserva nombre, publicación y orden. Los casos y borradores de clientes no cambian.")) return;
+    if (!draft || !example || !window.confirm("¿Cargar las etapas, preguntas y referencias del ejemplo editorial actualizado? Reemplaza solo el borrador del editor. No modifica el sitio hasta guardar; conserva nombre, palabras clave, publicación y orden. Los casos y borradores de clientes no cambian.")) return;
     const baseline = clone(example);
     patch({ steps: baseline.steps, guidance: baseline.guidance });
     setIssues([]); setError(""); setNotice("Ejemplo cargado solo en el editor. Revisa las preguntas y referencias, prueba el recorrido y guarda únicamente si deseas publicarlo. La revisión jurídica humana sigue pendiente.");
   }
   async function save() {
     if (!canManage || !draft || pending.current) return;
-    const parsed = parseCaseType(draft);
+    const parsed = parseCaseType({ ...draft, searchKeywords: keywords });
     if (!parsed.ok) { setIssues(parsed.issues.map((issue) => `${issue.field}: ${issue.message}`)); return; }
     if (!original && types.some((type) => type.id === parsed.type.id)) { setIssues(["El identificador ya existe. Elige otro identificador estable."]); return; }
     pending.current = true; setBusy(true); setError(""); setIssues([]); setNotice("");
@@ -90,6 +102,8 @@ export function AdminCaseTypes() {
       const saved = parseCaseType(result.type);
       if (!saved.ok) throw new Error("El servidor confirmó el guardado pero no devolvió una versión válida. Recarga antes de editar de nuevo.");
       setDraft(clone(saved.type)); setOriginal(clone(saved.type));
+      const savedKeywords = saved.type.searchKeywords?.join("\n") || "";
+      setKeywordText(savedKeywords); setOriginalKeywordText(savedKeywords);
       setTypes((current) => [...current.filter((type) => type.id !== saved.type.id), saved.type].sort((a, b) => a.sortOrder - b.sortOrder || a.topic.localeCompare(b.topic, "es")));
       setNotice("Formulario guardado y cambio registrado en la bitácora. El catálogo público usa esta versión; los borradores existentes conservan la versión con la que comenzaron.");
       // A failed refresh must not report the successful write as a failed save.
@@ -103,7 +117,7 @@ export function AdminCaseTypes() {
     finally { pending.current = false; setBusy(false); }
   }
 
-  const filtered = types.filter((type) => `${type.topic} ${type.category}`.toLocaleLowerCase("es").includes(search.toLocaleLowerCase("es")));
+  const filtered = searchCaseTypes(types, search);
   return <section className={`portal-panel ${styles.section}`} id="tipos-casos">
     <div className="panel-title"><div><p className="eyebrow">Catálogo y recorridos</p><h2>Tipos de casos y formularios</h2></div><button type="button" className="portal-primary-button" disabled={!canManage || busy} onClick={() => choose(null)}><Plus size={16} /> Agregar tipo de caso</button></div>
     <p className={styles.description}>Edita los títulos, iconos y preguntas que las personas ven antes de registrarse. La vista previa usa el mismo formulario del sitio y permite avanzar con errores sin guardar ni enviar solicitudes.</p>
@@ -111,12 +125,18 @@ export function AdminCaseTypes() {
     {loading ? <p role="status">Cargando catálogo…</p> : null}
     {!loading && !canManage ? <p className={styles.banner}>Tu acceso es de lectura. Solo administradores autorizados pueden guardar cambios.</p> : null}
     {error ? <p role="alert" className={styles.error}>{error}</p> : null}{notice ? <p role="status" className={styles.banner}>{notice}</p> : null}
-    <div className={styles.layout}><aside className={styles.listPanel}><label className={styles.search}>Buscar tipo<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre o categoría" /></label><div className={styles.list} aria-label="Tipos de casos configurados">{filtered.map((type) => <button type="button" key={type.id} className={draft?.id === type.id ? styles.selected : ""} onClick={() => choose(type)} disabled={busy}><CaseTypeIcon name={type.icon} size={20} /><span>{type.topic}<small>{type.category} · {type.enabled ? "Publicado" : "Oculto"} · v{type.version}</small></span></button>)}</div><p className={styles.count}>{types.filter((type) => type.enabled).length} publicados · {types.length} configurados</p></aside>
+    <div className={styles.layout}><aside className={styles.listPanel}><label className={styles.search}>Buscar tipo<input type="search" value={search} maxLength={120} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, área o palabra clave" /></label><div className={styles.list} aria-label="Tipos de casos configurados">{filtered.map((type) => <button type="button" key={type.id} className={draft?.id === type.id ? styles.selected : ""} onClick={() => choose(type)} disabled={busy}><CaseTypeIcon name={type.icon} size={20} /><span>{type.topic}<small>{type.category} · {type.enabled ? "Publicado" : "Oculto"} · v{type.version}</small></span></button>)}</div>{!loading && !filtered.length ? <p className={styles.count} role="status">No hay tipos de casos que coincidan con esa búsqueda.</p> : null}<p className={styles.count}>{types.filter((type) => type.enabled).length} publicados · {types.length} configurados</p></aside>
       <div className={styles.content}>{draft ? <>
         <div className={styles.editHeading}><h3>{original ? "Editar formulario" : "Nuevo formulario"}</h3><button type="button" className="text-link" onClick={() => setPreview(!preview)}><Eye size={16} /> {preview ? "Ocultar" : "Mostrar"} vista previa</button></div>
         {example ? <div className={styles.examplePanel}><BookOpen size={20} /><div><p>Ejemplo editorial chileno para este tipo</p><small>{example.guidance?.example}</small><small>Fuentes consultadas: {example.guidance?.consultedAt}. No equivale a validación jurídica.</small></div><button type="button" className="secondary-button" disabled={!canManage || busy} onClick={loadExample}><RotateCcw size={15} /> Cargar ejemplo actualizado</button></div> : null}
         <fieldset disabled={!canManage || busy} className={styles.editor}>
           <div className={styles.fields}><label>Nombre visible<input value={draft.topic} maxLength={120} onChange={(event) => patch({ topic: event.target.value })} /></label><label>Identificador estable<input value={draft.id} disabled={original !== null} maxLength={80} onChange={(event) => patch({ id: event.target.value })} /><small>No cambia después de crear el tipo; usa minúsculas y guiones.</small></label><label>Área legal<input list="case-type-categories" value={draft.category} maxLength={80} onChange={(event) => patch({ category: event.target.value })} /><datalist id="case-type-categories">{professionalLegalAreas.map((area) => <option key={area} value={area} />)}</datalist></label><label>Icono<select value={draft.icon} onChange={(event) => patch({ icon: event.target.value })}>{CASE_TYPE_ICONS.map((icon) => <option key={icon}>{icon}</option>)}</select></label><label>Orden en el home<input type="number" min={0} max={9999} value={draft.sortOrder} onChange={(event) => patch({ sortOrder: Number(event.target.value) })} /></label><label className={styles.checkbox}><input type="checkbox" checked={draft.enabled} onChange={(event) => patch({ enabled: event.target.checked })} /> Publicado en el catálogo</label><label className={styles.full}>Descripción de este tipo<textarea rows={3} maxLength={600} value={draft.description} onChange={(event) => patch({ description: event.target.value })} /></label></div>
+          <div className={styles.keywordEditor}>
+            <div className={styles.fields}><label className={styles.full} htmlFor="case-search-keywords">Palabras clave para el buscador del home<textarea id="case-search-keywords" rows={4} value={keywordText} maxLength={caseIntakeLimits.searchKeywordCharacters + caseIntakeLimits.searchKeywords * 2} aria-describedby={`case-search-keywords-help case-search-keywords-count${keywordIssues.length ? " case-search-keywords-errors" : ""}`} aria-invalid={keywordIssues.length > 0 || undefined} onChange={(event) => setKeywordText(event.target.value)} placeholder={"golpes\nviolencia familiar\nmaltrato en el hogar"} /></label></div>
+            <p id="case-search-keywords-help" className={styles.keywordHelp}>Una palabra o frase por línea; también puedes separarlas con comas. Incluye expresiones cotidianas relacionadas con este tipo de caso. Por ejemplo, «golpes» puede ayudar a encontrar Violencia Intrafamiliar. No agregues datos personales ni HTML. Al guardar se omiten los duplicados; deja el campo vacío para quitar todas las palabras clave.</p>
+            <p id="case-search-keywords-count" className={styles.count}>{keywords.length}/{caseIntakeLimits.searchKeywords} términos · {keywordCharacters}/{caseIntakeLimits.searchKeywordCharacters} caracteres · hasta {caseIntakeLimits.searchKeywordLength} por término</p>
+            {keywordIssues.length ? <div id="case-search-keywords-errors" className={styles.keywordError} role="alert"><ul>{[...new Set(keywordIssues)].map((issue) => <li key={issue}>{issue}</li>)}</ul></div> : null}
+          </div>
           {draft.steps.map((step, stepIndex) => <section className={styles.step} key={`editor-step-${stepIndex}`}>
             <div className={styles.stepHeader}><h4>Etapa {stepIndex + 1}</h4><div><button type="button" aria-label={`Subir etapa ${stepIndex + 1}`} disabled={stepIndex === 0} onClick={() => moveStep(stepIndex, -1)}><ArrowUp size={15} /></button><button type="button" aria-label={`Bajar etapa ${stepIndex + 1}`} disabled={stepIndex === draft.steps.length - 1} onClick={() => moveStep(stepIndex, 1)}><ArrowDown size={15} /></button><button type="button" disabled={draft.steps.length === 1} onClick={() => { if (window.confirm("¿Quitar esta etapa y sus preguntas del formulario que estás editando?")) patch({ steps: draft.steps.filter((_, index) => index !== stepIndex) }); }}><Trash2 size={14} /> Quitar etapa</button></div></div>
             <div className={styles.fields}><label>Título de etapa<input value={step.title} maxLength={100} onChange={(event) => patchStep(stepIndex, { title: event.target.value })} /></label><label>Identificador de etapa<input value={step.id} maxLength={80} onChange={(event) => patchStep(stepIndex, { id: event.target.value })} /></label><label className={styles.full}>Ayuda o descripción<textarea rows={2} value={step.description} maxLength={500} onChange={(event) => patchStep(stepIndex, { description: event.target.value })} /></label></div>
@@ -134,6 +154,7 @@ export function AdminCaseTypes() {
           </section>
           <div className={styles.actions}><button type="button" className="secondary-button" disabled={draft.steps.length >= caseIntakeLimits.steps} onClick={() => patch({ steps: [...draft.steps, { id: `etapa-${crypto.randomUUID().slice(0, 8)}`, title: "Nueva etapa", description: "", questions: [newQuestion()] }] })}><Plus size={15} /> Agregar etapa</button><button type="button" className="portal-primary-button" disabled={!dirty} onClick={() => void save()}><Save size={16} /> {busy ? "Guardando…" : "Guardar formulario"}</button></div>
         </fieldset>
+        <div className={styles.keywordTest}><label htmlFor="case-search-preview">Probar búsqueda en este borrador<input id="case-search-preview" type="search" value={keywordQuery} maxLength={120} onChange={(event) => setKeywordQuery(event.target.value)} placeholder="Escribe como lo haría una persona" /></label><p className={styles.keywordHelp}>Esta prueba usa el nombre, el área legal y las palabras clave sin publicar ni enviar datos.</p><p className={styles.keywordResult} role="status" aria-live="polite">{keywordMatch === null ? "Escribe una búsqueda para comprobar la coincidencia con este tipo de caso." : keywordMatch ? `Hay coincidencia con «${draft.topic}» en el borrador actual.` : "No hay coincidencia. Revisa si conviene agregar una palabra clave relacionada."}</p></div>
         {issues.length ? <div className={styles.error} role="alert"><p>Corrige lo siguiente antes de guardar:</p><ul>{issues.map((issue, index) => <li key={`${index}-${issue}`}>{issue}</li>)}</ul></div> : null}
         {dirty ? <p className={styles.count}>Cambios locales sin guardar. La vista previa de abajo ya refleja estos cambios; el sitio público se actualiza al guardar.</p> : null}
         {preview ? <div className={styles.preview}><IntakePreview type={draft} /></div> : null}

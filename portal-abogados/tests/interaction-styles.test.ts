@@ -39,6 +39,6 @@ test("long action labels can wrap and catalog copy keeps a responsive breathing 
   assert.match(system, /:is\(\.primary-button, \.secondary-button\) \{[^}]*max-width: 100%;[^}]*white-space: normal;[^}]*overflow-wrap: anywhere;/);
   assert.match(system, /\.hero-points li \{ align-items: flex-start; line-height: 1\.55;/);
   const catalog = readFileSync("src/components/case-type-grid.module.css", "utf8");
-  assert.match(catalog, /\.catalog \{[^}]*margin-top: clamp\(26px, 3vw, 36px\);/);
+  assert.match(catalog, /\.catalog \{[^}]*margin-top: clamp\(36px, 4vw, 52px\);/);
   assert.match(catalog, /\.cardText \{ line-height: 1\.55;/);
 });

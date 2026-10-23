@@ -1,4 +1,4 @@
-.catalog { width: 100%; min-width: 0; margin-top: clamp(26px, 3vw, 36px); }
+.catalog { width: 100%; min-width: 0; margin-top: clamp(36px, 4vw, 52px); }
 .grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 12px; }
 .card { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 15px; padding: 20px 16px; min-height: 155px; min-width: 0; border: 1px solid var(--line); background: linear-gradient(145deg,var(--surface-raised),var(--surface)); color: var(--ink); border-radius: 20px; text-align: left; text-decoration: none; transition: transform var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)), border-color var(--motion-fast, 180ms) ease, box-shadow var(--motion-fast, 180ms) var(--motion-ease, cubic-bezier(.22,1,.36,1)); }
 .card:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-color: var(--gold); }
@@ -16,9 +16,21 @@
 }
 .more { display: flex; justify-content: center; margin-top: 26px; }
 .more span { color: inherit; font-size: 12px; }
-.search { display: flex; flex-direction: column; gap: 9px; margin-bottom: 22px; color: var(--muted); font-size: 13px; font-weight: 400; }
-.search input { width: min(100%,540px); border: 1px solid var(--line); border-radius: 14px; min-height: 48px; padding: 12px 15px; background: var(--canvas); color: var(--ink); font: inherit; font-size: 16px; font-weight: 400; }
+.search { display: grid; gap: 10px; max-width: 540px; margin-bottom: 30px; color: var(--muted); font-size: 13px; font-weight: 400; }
+.search label { color: var(--ink); font-weight: 500; line-height: 1.5; }
+.searchControl { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 3px 5px 3px 15px; border: 1px solid var(--line); border-radius: 999px; background: var(--canvas); transition: border-color var(--motion-fast) ease; }
+.searchControl:focus-within { border-color: var(--gold); outline: 2px solid var(--gold); outline-offset: 3px; }
+.searchControl > svg { flex: 0 0 auto; color: var(--gold); }
+.searchControl input { width: 100%; min-width: 0; border: 0; border-radius: 999px; min-height: 44px; padding: 9px 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; font-weight: 400; outline: none; }
+.searchControl input:focus-visible { outline: none; }
+.searchControl input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.searchControl button { display: grid; place-items: center; flex: 0 0 44px; width: 44px; min-height: 44px; border: 0; border-radius: 50%; color: var(--ink); background: var(--surface-raised); }
+.searchControl button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.search p { margin: 0; line-height: 1.6; }
+.resultCount { font-size: 12px; color: var(--quiet); min-height: 20px; }
 .empty, .warning { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.empty { padding: 22px; border: 1px dashed var(--line); border-radius: 18px; }
+.empty p { margin: 0 0 18px; }
 .warning { margin-top: 16px; }
 @media (max-width: 1050px) { .grid { grid-template-columns: repeat(3,minmax(0,1fr)); } .card { min-height: 140px; } }
 @media (max-width: 620px) { .grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; } .card { padding: 16px 14px; min-height: 147px; border-radius: 17px; } .cardText { font-size: 13px; } }

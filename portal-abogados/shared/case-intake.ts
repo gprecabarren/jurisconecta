@@ -1,3 +1,5 @@
+import { normalizeCaseSearchKeyword } from "./case-search-keywords";
+
 /** Shared by the editor, public intake and Worker. Never contains executable HTML. */
 export const CASE_TYPE_ICONS = ["Scale", "HeartHandshake", "Landmark", "BriefcaseBusiness", "House", "UsersRound", "ShieldCheck", "Gavel", "Globe", "Car", "Stethoscope", "FileText", "Banknote", "Leaf", "Dog", "GraduationCap", "Laptop", "Plane", "HandCoins", "Baby", "Building2", "Network", "Phone", "ShoppingBag", "KeyRound", "Fingerprint"] as const;
 export type CaseTypeIcon = typeof CASE_TYPE_ICONS[number];
@@ -5,11 +7,11 @@ export type IntakeQuestion = { id: string; label: string; type: "text" | "textar
 export type IntakeStep = { id: string; title: string; description: string; questions: IntakeQuestion[] };
 export type IntakeSource = { title: string; url: string };
 export type IntakeGuidance = { consultedAt: string; note: string; example: string; sources: IntakeSource[] };
-export type CaseType = { id: string; category: string; topic: string; description: string; icon: string; enabled: boolean; sortOrder: number; version: number; steps: IntakeStep[]; guidance?: IntakeGuidance };
+export type CaseType = { id: string; category: string; topic: string; description: string; icon: string; enabled: boolean; sortOrder: number; version: number; steps: IntakeStep[]; guidance?: IntakeGuidance; searchKeywords?: string[] };
 export type IntakeIssue = { field: string; message: string };
 export type IntakeAnswersResult = { ok: true; answers: Record<string, string> } | { ok: false; issues: IntakeIssue[] };
 export type CaseTypeResult = { ok: true; type: CaseType } | { ok: false; issues: IntakeIssue[] };
-export const caseIntakeLimits = { types: 120, steps: 5, questionsPerStep: 8, questions: 20, schemaBytes: 24_000, answerBytes: 16_000 } as const;
+export const caseIntakeLimits = { types: 120, steps: 5, questionsPerStep: 8, questions: 20, schemaBytes: 24_000, answerBytes: 16_000, searchKeywords: 32, searchKeywordLength: 64, searchKeywordCharacters: 1600 } as const;
 const identifier = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const questionTypes = ["text", "textarea", "select", "date", "number"];
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === "object" && !Array.isArray(value); }
@@ -33,6 +35,24 @@ export function parseCaseType(input: unknown): CaseTypeResult {
   if (typeof input.enabled !== "boolean") error("enabled", "Indica si el tipo está publicado.");
   if (!integer(input.sortOrder, 0, 9999)) error("sortOrder", "El orden debe ser un entero entre 0 y 9999.");
   if (!integer(input.version, 1, 2_000_000_000)) error("version", "La versión no es válida.");
+  let searchKeywords: string[] | undefined;
+  if (input.searchKeywords !== undefined) {
+    if (!Array.isArray(input.searchKeywords) || input.searchKeywords.length > caseIntakeLimits.searchKeywords) error("searchKeywords", "Incluye un máximo de 32 palabras o frases de búsqueda.");
+    else {
+      searchKeywords = [];
+      const seen = new Set<string>();
+      let total = 0;
+      input.searchKeywords.forEach((keyword: unknown, index: number) => {
+        if (typeof keyword !== "string" || /[<>\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\uFEFF]/u.test(keyword)) { error(`searchKeywords.${index}`, "Usa palabras o frases sin HTML ni caracteres de control."); return; }
+        const value = keyword.trim().replace(/\s+/gu, " ");
+        if (!value || value.length > caseIntakeLimits.searchKeywordLength) { error(`searchKeywords.${index}`, "Cada término debe tener entre 1 y 64 caracteres."); return; }
+        total += value.length;
+        const key = normalizeCaseSearchKeyword(value);
+        if (!seen.has(key)) { seen.add(key); searchKeywords!.push(value); }
+      });
+      if (total > caseIntakeLimits.searchKeywordCharacters) error("searchKeywords", "Las palabras de búsqueda no pueden superar 1600 caracteres en total.");
+    }
+  }
   const steps: IntakeStep[] = [], stepIds = new Set<string>(), questionIds = new Set<string>();
   if (!Array.isArray(input.steps) || input.steps.length < 1 || input.steps.length > caseIntakeLimits.steps) error("steps", "Incluye entre 1 y 5 pasos.");
   else input.steps.forEach((step: unknown, index: number) => {
@@ -82,7 +102,7 @@ export function parseCaseType(input: unknown): CaseTypeResult {
     }
   }
   if (issues.length) return { ok: false, issues };
-  return { ok: true, type: { id: String(input.id), category: String(input.category).trim(), topic: String(input.topic).trim(), description: String(input.description).trim(), icon: String(input.icon), enabled: input.enabled === true, sortOrder: Number(input.sortOrder), version: Number(input.version), steps, ...(guidance ? { guidance } : {}) } };
+  return { ok: true, type: { id: String(input.id), category: String(input.category).trim(), topic: String(input.topic).trim(), description: String(input.description).trim(), icon: String(input.icon), enabled: input.enabled === true, sortOrder: Number(input.sortOrder), version: Number(input.version), steps, ...(guidance ? { guidance } : {}), ...(searchKeywords !== undefined ? { searchKeywords } : {}) } };
 }
 
 export function validateIntakeAnswers(caseType: CaseType, input: unknown, partial = false): IntakeAnswersResult {

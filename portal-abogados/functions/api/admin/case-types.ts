@@ -4,6 +4,7 @@ import { readSession, type AuthEnv } from "../../_lib/github-auth";
 import { readJsonBody } from "../../_lib/http";
 import { caseIntakeLimits, parseCaseType } from "../../../shared/case-intake";
 import { CASE_TYPE_SEED } from "../../../shared/case-intake-seed";
+import { defaultCaseSearchKeywords } from "../../../shared/case-search-keywords";
 interface Context { request: Request; env: AuthEnv }
 const headers = { "Cache-Control": "no-store" };
 function failed(error: unknown): Response { if (error instanceof CaseTypeError) return Response.json({ error: error.message }, { status: error.status, headers }); throw error; }
@@ -27,7 +28,10 @@ async function save({ request, env }: Context, create: boolean): Promise<Respons
     const before = await readCaseType(env.DB, type.id);
     if (create && before) throw new CaseTypeError("Ese identificador ya existe. Edita el tipo existente para conservar su historial.");
     if (!create && (!before || before.version !== expectedVersion)) throw new CaseTypeError("El formulario cambió. Recarga antes de guardar.");
-    const finalType = { ...type, version: create ? 1 : Number(expectedVersion) + 1 }, guard = crypto.randomUUID();
+    // Older editors omit this optional field: never erase an administrator's saved aliases.
+    // An explicit empty array is intentional and must not bring the defaults back.
+    const searchKeywords = type.searchKeywords ?? before?.searchKeywords ?? defaultCaseSearchKeywords(type.id);
+    const finalType = { ...type, searchKeywords, version: create ? 1 : Number(expectedVersion) + 1 }, guard = crypto.randomUUID();
     // Count the union of immutable baseline IDs and DB additions inside the same atomic batch.
     const baselineIds = CASE_TYPE_SEED.map((item) => item.id), placeholders = baselineIds.map(() => "?").join(",");
     const countSql = `(SELECT COUNT(*) FROM case_type_catalog WHERE id NOT IN (${placeholders})) + ?`;

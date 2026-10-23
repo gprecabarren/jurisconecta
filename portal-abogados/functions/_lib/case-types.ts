@@ -1,6 +1,7 @@
 import { CASE_TYPE_SEED } from "../../shared/case-intake-seed";
 import { parseCaseType, type CaseType } from "../../shared/case-intake";
 import type { D1Database } from "./user-auth";
+import { defaultCaseSearchKeywords } from "../../shared/case-search-keywords";
 
 export { validateIntakeAnswers } from "../../shared/case-intake";
 export class CaseTypeError extends Error { constructor(message: string, public status = 409) { super(message); } }
@@ -10,7 +11,7 @@ function fromRow(row: CatalogRow): CaseType {
   try { value = JSON.parse(row.schema_json); } catch { throw new CaseTypeError("El formulario guardado no es válido. Revisa su configuración.", 503); }
   const parsed = parseCaseType(value);
   if (!parsed.ok || parsed.type.id !== row.id) throw new CaseTypeError("El formulario guardado no es válido. Revisa su configuración.", 503);
-  return { ...parsed.type, version: row.version, enabled: row.enabled === 1, sortOrder: row.sort_order };
+  return { ...parsed.type, version: row.version, enabled: row.enabled === 1, sortOrder: row.sort_order, searchKeywords: parsed.type.searchKeywords === undefined ? defaultCaseSearchKeywords(row.id) : parsed.type.searchKeywords };
 }
 export async function readCaseTypes(db: D1Database, includeDisabled = false): Promise<CaseType[]> {
   const rows = await db.prepare("SELECT id, schema_json, version, enabled, sort_order FROM case_type_catalog ORDER BY sort_order, id LIMIT 121").all<CatalogRow>();
