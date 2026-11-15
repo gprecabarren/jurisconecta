@@ -1,40 +1,49 @@
 import { cleanText, normalizeRut, requireUser, validRut, type UserAuthEnv } from "../../_lib/user-auth";
 import { readJsonBody } from "../../_lib/http";
-import { professionalLegalAreas } from "../../../shared/legal-catalog";
+import { LawyerDetailsError, lawyerWriteConflict, lawyerWriteGuard, lawyerWriteLimit, readLawyerApplication, readLawyerAvatar, readLawyerContact, readLawyerPractice, readProfessionalDetails, writeLawyerApplication } from "../../_lib/lawyer-onboarding";
 
 interface Context { request: Request; env: UserAuthEnv; }
-const modes = new Set(["remote", "hybrid", "in_person"]);
-
-function optionalUrl(value: unknown) {
-  const text = cleanText(value, 300);
-  if (!text) return null;
-  try { const url = new URL(text); return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null; } catch { return null; }
-}
+type CurrentApplicant = { full_name: string; phone: string | null; region: string | null; commune: string | null; specialties_json: string; application_status: string };
 
 export const onRequestPost = async ({ request, env }: Context) => {
-  if (!env.DB) return Response.json({ error: "Base de datos no disponible." }, { status: 503 });
+  const db = env.DB;
+  if (!db) return Response.json({ error: "Base de datos no disponible." }, { status: 503 });
   const session = await requireUser(request, env, "lawyer");
   if (!session) return Response.json({ error: "No autorizado." }, { status: 401 });
-  const body = await readJsonBody(request);
+  const body = await readJsonBody(request, lawyerWriteLimit);
   if (!body) return Response.json({ error: "Solicitud inválida o demasiado grande." }, { status: 400 });
   const rut = normalizeRut(body.rut);
-  const university = cleanText(body.university, 160);
-  const graduationDate = cleanText(body.graduationDate, 10);
   const bio = cleanText(body.bio, 3000);
-  const specialties = Array.isArray(body.specialties) ? body.specialties.filter((item): item is string => typeof item === "string" && professionalLegalAreas.includes(item)).slice(0, 10) : [];
   const plan = cleanText(body.planCode, 20);
-  const availablePlan = await env.DB.prepare("SELECT code FROM subscription_plans WHERE code = ? AND active = 1").bind(plan).first<{ code: string }>();
-  const mode = cleanText(body.attentionMode, 20);
-  const years = Number(body.experienceYears ?? 0);
-  if (!validRut(rut) || university.length < 3 || !/^\d{4}-\d{2}-\d{2}$/.test(graduationDate) || Number.isNaN(Date.parse(graduationDate)) || graduationDate > new Date().toISOString().slice(0, 10) || bio.length < 30 || specialties.length === 0 || !availablePlan || !modes.has(mode) || !Number.isInteger(years) || years < 0 || years > 70 || body.manualVerificationConsent !== true) return Response.json({ error: "Revisa RUT, título, fecha, especialidades, presentación y consentimiento para la revisión manual." }, { status: 400 });
-  const links = [body.linkedinUrl, body.twitterUrl, body.youtubeUrl, body.facebookUrl, body.instagramUrl, body.websiteUrl];
-  if (links.some((value) => cleanText(value, 300) && !optionalUrl(value))) return Response.json({ error: "Los enlaces profesionales deben comenzar con https:// o http://." }, { status: 400 });
-  const profile = await env.DB.prepare("SELECT application_status FROM lawyer_profiles WHERE user_id = ? LIMIT 1").bind(session.id).first<{ application_status: string }>();
-  if (!profile || !["draft", "changes_requested"].includes(profile.application_status)) return Response.json({ error: "Esta postulación no admite cambios en su estado actual." }, { status: 409 });
-  await env.DB.batch([
-    env.DB.prepare("INSERT INTO lawyer_applications (user_id, rut, graduation_date, university, attention_mode, service_localities, experience_years, additional_studies, work_experience, linkedin_url, twitter_url, youtube_url, facebook_url, instagram_url, website_url, address, selected_plan_code, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(user_id) DO UPDATE SET rut = excluded.rut, graduation_date = excluded.graduation_date, university = excluded.university, attention_mode = excluded.attention_mode, service_localities = excluded.service_localities, experience_years = excluded.experience_years, additional_studies = excluded.additional_studies, work_experience = excluded.work_experience, linkedin_url = excluded.linkedin_url, twitter_url = excluded.twitter_url, youtube_url = excluded.youtube_url, facebook_url = excluded.facebook_url, instagram_url = excluded.instagram_url, website_url = excluded.website_url, address = excluded.address, selected_plan_code = excluded.selected_plan_code, updated_at = CURRENT_TIMESTAMP").bind(session.id, rut, graduationDate, university, mode, cleanText(body.serviceLocalities, 600) || null, years, cleanText(body.additionalStudies, 3000) || null, cleanText(body.workExperience, 3000) || null, ...links.map(optionalUrl), cleanText(body.address, 500) || null, plan),
-    env.DB.prepare("UPDATE lawyer_profiles SET specialties_json = ?, bio = ?, plan_code = ?, application_status = 'submitted', application_submitted_at = CURRENT_TIMESTAMP, application_review_note = NULL WHERE user_id = ?").bind(JSON.stringify(specialties), bio, plan, session.id),
-    env.DB.prepare("UPDATE users SET status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(session.id),
+  if (!validRut(rut) || bio.length < 30 || !plan || body.manualVerificationConsent !== true) {
+    return Response.json({ error: "Revisa el RUT, la presentación, el plan y el consentimiento para la revisión manual." }, { status: 400 });
+  }
+  const [profile, previous, availablePlan] = await Promise.all([
+    db.prepare("SELECT u.full_name, u.phone, u.region, u.commune, lp.specialties_json, lp.application_status FROM users u JOIN lawyer_profiles lp ON lp.user_id = u.id WHERE u.id = ?").bind(session.id).first<CurrentApplicant>(),
+    readLawyerApplication(db, session.id),
+    db.prepare("SELECT code FROM subscription_plans WHERE code = ? AND active = 1").bind(plan).first<{ code: string }>(),
   ]);
-  return Response.json({ submitted: true, verification: "manual" }, { status: 201 });
+  if (!profile || !["draft", "changes_requested"].includes(profile.application_status)) return Response.json({ error: "Esta postulación no admite cambios en su estado actual." }, { status: 409 });
+  if (!availablePlan) return Response.json({ error: "Elige un plan habilitado." }, { status: 400 });
+  try {
+    const { changes, country } = readProfessionalDetails(body, previous ?? {}, true);
+    const newContactForm = body.country !== undefined;
+    const contact = readLawyerContact(body, profile, country, newContactForm);
+    const avatar = readLawyerAvatar(body.avatarDataUrl);
+    const practice = await readLawyerPractice(db, body.specialties ?? [], body.practiceTopicIds, profile.specialties_json, String(previous?.practice_topics_json || "[]"));
+    const guard = crypto.randomUUID();
+    await db.batch([
+      lawyerWriteGuard(db, guard, session, { plan }),
+      writeLawyerApplication(db, session.id, { ...changes, rut, ...(practice.topics === undefined ? {} : { practice_topics_json: practice.topics }), selected_plan_code: plan }, plan),
+      db.prepare("UPDATE lawyer_profiles SET specialties_json = ?, bio = ?, plan_code = ?, application_status = 'submitted', application_submitted_at = CURRENT_TIMESTAMP, application_review_note = NULL WHERE user_id = ?").bind(practice.specialties ?? profile.specialties_json, bio, plan, session.id),
+      db.prepare("UPDATE users SET full_name = ?, phone = ?, region = ?, commune = ?, avatar_data_url = CASE WHEN ? = 1 THEN ? ELSE avatar_data_url END, status = 'pending', updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+        .bind(contact.fullName, contact.phone, contact.region, contact.commune, avatar === undefined ? 0 : 1, avatar ?? null, session.id),
+      db.prepare("DELETE FROM account_transaction_guards WHERE id = ?").bind(guard),
+    ]);
+    return Response.json({ submitted: true, verification: "manual" }, { status: 201 });
+  } catch (error) {
+    if (error instanceof LawyerDetailsError) return Response.json({ error: error.message }, { status: 400 });
+    if (lawyerWriteConflict(error)) return Response.json({ error: "La postulación, la sesión o el plan cambió. Recarga antes de continuar." }, { status: 409 });
+    throw error;
+  }
 };

@@ -1,0 +1,23 @@
+.professional {
+  display: grid;
+  min-width: 0;
+  gap: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.professional > h2,
+.professional > p {
+  margin: 0;
+}
+
+.professional > :is(a, button) {
+  justify-self: start;
+}
+
+.error {
+  padding: .75rem 1rem;
+  border: 1px solid #a96350;
+  border-radius: .75rem;
+  color: #f7cbc1;
+  background: #391f1b;
+}

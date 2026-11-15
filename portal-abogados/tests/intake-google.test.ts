@@ -107,6 +107,39 @@ test("existing Google lawyer identity retains its role and professional destinat
   assert.equal((await env.DB.prepare("SELECT owner_user_id FROM case_intake_drafts WHERE id = ?").bind(stored.draft.id).first<{ owner_user_id: string | null }>())?.owner_user_id, null);
 });
 
+test("professional signup records agreement and Google links back to the pending application", async (t) => {
+  const env = environment();
+  const email = "pending-lawyer@example.test";
+  const password = "lawyer-fixture-password";
+  const details = { fullName: "Abogada de prueba", email, password, passwordConfirmation: password, role: "lawyer", phone: contact.phone, acceptTerms: true, emailVerified: true };
+  const submit = (body: typeof details) => register({ request: request("/api/auth/register", "POST", body), env });
+  assert.equal((await submit({ ...details, passwordConfirmation: "different-password" })).status, 400);
+  assert.equal((await submit({ ...details, acceptTerms: false })).status, 400);
+  assert.equal((await submit({ ...details, phone: "inválido" })).status, 400);
+
+  const registered = await submit(details);
+  assert.equal(registered.status, 200);
+  const account = await env.DB.prepare("SELECT id, phone, status, terms_accepted_at, email_verified_at FROM users WHERE email = ?").bind(email).first<{ id: string; phone: string; status: string; terms_accepted_at: string; email_verified_at: string | null }>();
+  assert.ok(account?.terms_accepted_at);
+  assert.equal(account.phone, contact.phone);
+  assert.equal(account.status, "pending");
+  assert.equal(account.email_verified_at, null);
+
+  const session = responseCookie(registered, "juris_user");
+  assert.ok(session);
+  const cancelled = await begin(env, "lawyer", "", `juris_user=${session}`, "link");
+  const cancelledResponse = await googleCallback(request(`/auth/google/callback?state=${cancelled.state}&error=access_denied`, "GET", undefined, cancelled.cookie), env);
+  assert.equal(cancelledResponse.headers.get("Location"), "https://jurisconecta.cl/postulacion-abogado/?google_error=cancelled");
+  assert.equal(await hasVerifiedEmail(env, account.id), false);
+
+  const started = await begin(env, "lawyer", "/solicitar/", `juris_user=${session}`, "link");
+  await mockGoogle(t, started.flow.nonce, { email });
+  const response = await googleCallback(request(`/auth/google/callback?state=${started.state}&code=local-code`, "GET", undefined, started.cookie), env);
+  assert.equal(response.headers.get("Location"), "https://jurisconecta.cl/postulacion-abogado/?google=verified");
+  assert.equal(await hasVerifiedEmail(env, account.id), true);
+  assert.equal((await env.DB.prepare("SELECT application_status FROM lawyer_profiles WHERE user_id = ?").bind(account.id).first<{ application_status: string }>())?.application_status, "draft");
+});
+
 test("Google never auto-links an existing password account even when verified provider email differs only by case", async (t) => {
   const env = environment(), created = await register({ request: request("/api/auth/register", "POST", { fullName: "Password fixture", email: "OAuth.Existing@Example.Test", password: "fixture-password-123", role: "person", email_verified_at: "forged", emailVerified: true }), env });
   assert.equal(created.status, 200);

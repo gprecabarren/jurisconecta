@@ -13,7 +13,11 @@ async function main() {
   const localOrigin = `http://127.0.0.1:${port}`;
   const assetRoot = resolve("out");
   const DB = new TestDb();
+  const lawyerMode = process.argv.includes("--lawyer");
   DB.native.exec("UPDATE github_administrators SET github_login = 'propietario-demo' WHERE role = 'owner'; UPDATE users SET full_name = CASE role WHEN 'person' THEN 'Cliente de ejemplo' ELSE 'Abogado de ejemplo' END, email = id || '@example.test'");
+  if (lawyerMode) {
+    DB.native.exec("INSERT INTO users (id,email,full_name,role,status,phone) VALUES ('fixture-lawyer','abogado@example.test','Profesional de ejemplo','lawyer','pending','+56955550000'); INSERT INTO lawyer_profiles (user_id,application_status) VALUES ('fixture-lawyer','draft')");
+  }
   const mime: Record<string, string> = { ".html": "text/html; charset=utf-8", ".js": "application/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".woff2": "font/woff2", ".ico": "image/x-icon" };
   async function asset(request: Request) {
     const pathname = decodeURIComponent(new URL(request.url).pathname);
@@ -32,7 +36,10 @@ async function main() {
   const admin = `juris_admin=${await createSession("propietario-demo", env, metadata)}`;
   const clientRow = await DB.prepare("SELECT id, email, full_name, session_version FROM users WHERE role = 'person' LIMIT 1").first<{ id: string; email: string; full_name: string; session_version: number }>();
   if (!clientRow) throw new Error("Missing fixture client");
-  const user = `juris_user=${await createUserSession({ id: clientRow.id, email: clientRow.email, fullName: clientRow.full_name, role: "person", sessionVersion: clientRow.session_version }, env, metadata)}`;
+  const userIdentity = lawyerMode
+    ? { id: "fixture-lawyer", email: "abogado@example.test", fullName: "Profesional de ejemplo", role: "lawyer" as const, sessionVersion: 0 }
+    : { id: clientRow.id, email: clientRow.email, fullName: clientRow.full_name, role: "person" as const, sessionVersion: clientRow.session_version };
+  const user = `juris_user=${await createUserSession(userIdentity, env, metadata)}`;
   // All state stays in this process. Production APIs are never called.
   const ticketId = crypto.randomUUID();
   await DB.prepare("INSERT INTO support_tickets (id,user_id,subject,category) VALUES (?,?,?,?)").bind(ticketId, clientRow.id, "No puedo revisar una propuesta de ejemplo", "technical").run();
@@ -70,7 +77,7 @@ async function main() {
       outgoing.writeHead(500).end("Local fixture error");
     }
   });
-  server.listen(port, "127.0.0.1", () => console.log(`Local-only fictional preview: ${localOrigin}/admin/#tickets and /admin/correos/`));
+  server.listen(port, "127.0.0.1", () => console.log(`Local-only fictional preview: ${localOrigin}${lawyerMode ? "/postulacion-abogado/ and /admin/#vista-previa" : "/admin/#tickets and /admin/correos/"}`));
   const close = () => server.close(() => { DB.native.close(); process.exit(0); });
   process.on("SIGINT", close);
   process.on("SIGTERM", close);

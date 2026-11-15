@@ -3,6 +3,7 @@ import { cookie, cookieValue, clearCookie } from "./github-auth";
 import { cleanText, createUserSession, loginDestination, normalizeEmail, requireUser, userSessionCookie, type UserAuthEnv, type UserRole } from "./user-auth";
 import { noStore, readJsonBody } from "./http";
 import { isChileRegion } from "../../shared/chile";
+import { validLawyerPhone } from "../../shared/lawyer-onboarding";
 
 export type GoogleEnv = UserAuthEnv & { GOOGLE_CLIENT_ID?: string; GOOGLE_CLIENT_SECRET?: string };
 const origin = "https://jurisconecta.cl";
@@ -75,34 +76,46 @@ export async function googleCallback(request: Request, env: GoogleEnv) {
   // DELETE RETURNING consumes the transaction exactly once, even under concurrent callbacks.
   const flow = await env.DB.prepare("DELETE FROM google_oauth_flows WHERE state_hash = ? AND expires_at > ? RETURNING verifier, nonce, intent, role, user_id, return_to").bind(await oauthHash(state), Date.now()).first<Flow>();
   if (!flow) return fail("expired");
-  if (url.searchParams.has("error")) return fail("cancelled");
+  async function failFlow(reason: string) {
+    if (flow?.intent === "link" && flow.role === "lawyer") {
+      const session = await requireUser(request, env);
+      if (session?.role === "lawyer" && session.id === flow.user_id) {
+        const profile = await env.DB!.prepare("SELECT application_status FROM lawyer_profiles WHERE user_id = ?").bind(session.id).first<{ application_status: string }>();
+        if (profile?.application_status !== "approved") return redirect(`/postulacion-abogado/?google_error=${encodeURIComponent(reason)}`, [clearCookie("juris_google_state")]);
+      }
+    }
+    return fail(reason);
+  }
+  if (url.searchParams.has("error")) return failFlow("cancelled");
   const code = url.searchParams.get("code");
-  if (!code || code.length > 4096) return fail("invalid");
+  if (!code || code.length > 4096) return failFlow("invalid");
   try {
     const response = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: env.GOOGLE_CLIENT_ID!, client_secret: env.GOOGLE_CLIENT_SECRET!, code, code_verifier: flow.verifier, grant_type: "authorization_code", redirect_uri: callback }), signal: AbortSignal.timeout(10_000) });
     const tokens: unknown = await response.json();
-    if (!response.ok || !tokens || typeof tokens !== "object" || !("id_token" in tokens) || typeof tokens.id_token !== "string") return fail("invalid");
+    if (!response.ok || !tokens || typeof tokens !== "object" || !("id_token" in tokens) || typeof tokens.id_token !== "string") return failFlow("invalid");
     const jwks = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"), { timeoutDuration: 5000 });
     const { payload } = await jwtVerify(tokens.id_token, jwks, { audience: env.GOOGLE_CLIENT_ID!, issuer: ["https://accounts.google.com", "accounts.google.com"], algorithms: ["RS256"], maxTokenAge: "10m", clockTolerance: 30 });
-    if (!validGoogleClaims(payload, flow.nonce)) return fail("invalid");
+    if (!validGoogleClaims(payload, flow.nonce)) return failFlow("invalid");
     const email = normalizeEmail(payload.email as string), subject = payload.sub!;
     const identity = await env.DB.prepare("SELECT users.id, users.email, users.full_name, users.role, users.status, users.session_version FROM google_identities JOIN users ON users.id = google_identities.user_id WHERE subject = ?").bind(subject).first<User>();
     if (flow.intent === "link" || flow.intent === "reauth") {
       const session = await requireUser(request, env);
       if (!session || session.id !== flow.user_id) return fail("session");
       const user = await env.DB.prepare("SELECT id, email, full_name, role, status, session_version FROM users WHERE id = ?").bind(session.id).first<User>();
-      if (!user || user.role === "admin" || user.status === "suspended" || normalizeEmail(user.email) !== email || (identity && identity.id !== user.id)) return fail("link");
+      if (!user || user.role === "admin" || user.status === "suspended" || normalizeEmail(user.email) !== email || (identity && identity.id !== user.id)) return failFlow("link");
       if (flow.intent === "reauth" && identity?.id !== user.id) return fail("link");
       const linked = await env.DB.prepare("SELECT subject FROM google_identities WHERE user_id = ?").bind(user.id).first<{ subject: string }>();
-      if (linked && linked.subject !== subject) return fail("link");
+      if (linked && linked.subject !== subject) return failFlow("link");
       await env.DB.batch([
         env.DB.prepare("INSERT OR IGNORE INTO google_identities (subject, user_id) VALUES (?, ?)").bind(subject, user.id),
         env.DB.prepare("UPDATE user_sessions SET google_reauth_at = ? WHERE id = ? AND user_id = ? AND revoked_at IS NULL AND EXISTS (SELECT 1 FROM google_identities WHERE subject = ? AND user_id = ?)").bind(Date.now(), session.sessionId, user.id, subject, user.id),
         env.DB.prepare("UPDATE users SET email_verified_at = COALESCE(email_verified_at,CURRENT_TIMESTAMP) WHERE id = ? AND EXISTS(SELECT 1 FROM google_identities WHERE subject = ? AND user_id = ?)").bind(user.id,subject,user.id),
       ]);
       const confirmed = await env.DB.prepare("SELECT subject FROM google_identities WHERE user_id = ? AND subject = ?").bind(user.id, subject).first<{ subject: string }>();
-      if (!confirmed) return fail("link");
-      return redirect(user.role === "person" && flow.return_to === "/solicitar/" ? flow.return_to : user.role === "person" ? "/cliente/cuenta/?google=verified" : "/account/?google=verified", [clearCookie("juris_google_state")]);
+      if (!confirmed) return failFlow("link");
+      if (user.role === "person") return redirect(flow.return_to === "/solicitar/" ? flow.return_to : "/cliente/cuenta/?google=verified", [clearCookie("juris_google_state")]);
+      const pendingLawyer = flow.intent === "link" && await userDestination(user, env) === "/postulacion-abogado/";
+      return redirect(pendingLawyer ? "/postulacion-abogado/?google=verified" : "/account/?google=verified", [clearCookie("juris_google_state")]);
     }
     if (identity) return loginGoogleUser(request, env, identity, flow.return_to);
     // Never auto-link by email. Password account owners must explicitly link from their signed-in panel.
@@ -115,7 +128,7 @@ export async function googleCallback(request: Request, env: GoogleEnv) {
   } catch {
     // No codes, tokens, credentials, user emails or provider errors in logs.
     console.error(JSON.stringify({ message: "Google OAuth verification failed" }));
-    return fail("invalid");
+    return failFlow("invalid");
   }
 }
 
@@ -129,14 +142,16 @@ export async function googleRegistration(request: Request, env: GoogleEnv) {
   if (request.method === "GET") return noStore(Response.json({ email: pending.email, fullName: pending.full_name, role: pending.role }));
   const body = await readJsonBody(request);
   const fullName = cleanText(body?.fullName, 120), region = cleanText(body?.region, 80);
+  const phone = cleanText(body?.phone, 30);
   if (fullName.length < 3 || body?.acceptTerms !== true || (region && !isChileRegion(region))) return Response.json({ error: "Revisa tu nombre, región y aceptación de términos." }, { status: 400 });
+  if (pending.role === "lawyer" && phone && !validLawyerPhone(phone)) return Response.json({ error: "Revisa el teléfono e incluye su código de país, por ejemplo +56." }, { status: 400 });
   const exists = await env.DB.prepare("SELECT id FROM users WHERE lower(trim(email)) = ?").bind(normalizeEmail(pending.email)).first<{ id: string }>();
   if (exists) return Response.json({ error: "Ya existe esa cuenta. Inicia sesión y vincula Google desde tu panel." }, { status: 409 });
   const consumed = await env.DB.prepare("DELETE FROM google_registrations WHERE token_hash = ? AND expires_at > ? RETURNING subject").bind(hash, Date.now()).first<{ subject: string }>();
   if (!consumed) return Response.json({ error: "El registro expiró o ya fue utilizado." }, { status: 409 });
   const id = crypto.randomUUID(), status = pending.role === "lawyer" ? "pending" : "active";
   const statements = [
-    env.DB.prepare("INSERT INTO users (id, email, full_name, role, status, auth_provider, provider_subject, phone, region, commune, terms_accepted_at,email_verified_at) VALUES (?, ?, ?, ?, ?, 'google', ?, ?, ?, ?, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind(id, normalizeEmail(pending.email), fullName, pending.role, status, pending.subject, cleanText(body?.phone, 30) || null, region || null, cleanText(body?.commune, 80) || null),
+    env.DB.prepare("INSERT INTO users (id, email, full_name, role, status, auth_provider, provider_subject, phone, region, commune, terms_accepted_at,email_verified_at) VALUES (?, ?, ?, ?, ?, 'google', ?, ?, ?, ?, CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)").bind(id, normalizeEmail(pending.email), fullName, pending.role, status, pending.subject, phone || null, region || null, cleanText(body?.commune, 80) || null),
     env.DB.prepare("INSERT INTO google_identities (subject, user_id) VALUES (?, ?)").bind(pending.subject, id),
   ];
   if (pending.role === "lawyer") statements.push(env.DB.prepare("INSERT INTO lawyer_profiles (user_id, subscription_status, plan_code, application_status) VALUES (?, 'none', 'silver', 'draft')").bind(id));
